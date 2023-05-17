@@ -1,0 +1,304 @@
+/*
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ * Copyright (C) 2009-2013 Daniel Garner
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version. 
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+ .xibo-calendar-controls {
+     margin-left: 0.5rem;
+     line-height: 0;
+     margin-bottom: 0.5rem;
+ }
+ 
+ .xibo-calendar-controls #dateInput {
+    border: none;
+    padding: 0;
+    margin: 0;
+    height: 34px;
+ }
+ 
+ .xibo-calendar-controls #dateInput .input-group-addon {
+    color: #428bca;
+    background-color: white;
+    width: 0px;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.42857143;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+ }
+
+ .xibo-calendar-controls #dateInput input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    padding: 0;
+    border: none;
+    position: relative;
+    top: 1.8rem;
+    right: 3rem;
+ }
+ 
+ .xibo-calendar-controls.dropdown {
+     min-width: 120px;
+ }
+
+ @media (max-width: 1400px) {
+    .xibo-calendar-controls.dropdown {
+        max-width: 360px;
+    }
+ }
+
+ #calendar-progress {
+    font-size: 0rem;
+    -webkit-transition: font-size 0.2s;
+    -moz-transition: font-size 0.2s;
+    -o-transition: font-size 0.2s;
+    transition: font-size 0.2s;
+ }
+
+ #calendar-progress.show {
+    font-size: 1.5rem;
+ }
+
+ #cal-week-box {
+ 	z-index: 1000;
+ }
+
+ .cal-legend ul {
+ 	list-style: none;
+ }
+
+ #cal-day-box {
+    overflow-x: auto;
+ }
+ 
+ #cal-day-box #cal-day-panel {
+    width: max-content;
+    min-width: 100%;
+ }
+
+ .day-highlight {
+ 	overflow: hidden;
+ }
+
+ .day-event.day-event-small {
+    border-color: orange !important;
+    background-color: orange;
+    min-height: 20px;
+    opacity: 0.8;
+ }
+
+ .day-event.day-event-small:hover {
+    opacity: 1;
+ }
+ 
+.agenda-table {
+    margin-bottom: 20px;
+    background-color: #fff;
+    border-radius: 4px;
+}
+
+.agenda-table thead {
+    background-color: #e3e3e3;
+}
+
+.agenda-table .table-title {
+    background-color: #30426a;
+    color: #fff;
+}
+
+.agenda-panel .panel-body {
+    background-color: #f5f5f5;
+    padding: 10px 0 0 0;
+}
+
+.agenda-panel .panel-heading {
+    background-color: white;
+}
+
+.agenda-panel .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+    background-color: #ddd;
+}
+
+.agenda-panel .text-danger {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 90px;
+}
+
+.agenda-table tbody tr.low-priority {
+    color: grey;
+}
+
+.agenda-table tbody tr:hover {
+    cursor: pointer;
+    color: #428bca;
+}
+
+.agenda-table tbody tr.selected {
+    cursor: pointer;
+    background-color: #428bca;
+    color: white;
+}
+
+.agenda-table tbody tr.selected-linked {
+    cursor: pointer;
+    background-color: #83acd0;
+    color: white;
+}
+
+.agenda-table .btn-tag {
+    padding: 0px 5px;
+    cursor: default;
+}
+
+.agenda-panel .dataTables_wrapper {
+    padding-top: 10px;
+    float: left;
+    width: 100%;
+}
+
+.agenda-panel .dataTables_wrapper:not(:last-child) {
+    border-bottom: 2px solid #e3e3e3;
+}
+
+@media (min-width: 1200px) {
+    .agenda-panel .agenda-col {
+        padding: 0 5px;
+    }
+
+    .agenda-panel .agenda-col.col-lg-3 {
+        margin-top: 41px;
+    }
+
+    .agenda-panel .dataTables_wrapper .col-sm-12 {
+        padding: 0;
+    }
+
+    .agenda-panel .table>tbody>tr>td, .agenda-panel .table>tbody>tr>th, .agenda-panel .table>tfoot>tr>td, .agenda-panel .table>tfoot>tr>th, .agenda-panel .table>thead>tr>td, .agenda-panel .table>thead>tr>th {
+        padding: 4px;
+    }
+
+    .agenda-panel table.dataTable thead > tr > th.sorting_asc, .agenda-panel table.dataTable thead > tr > th.sorting_desc, .agenda-panel table.dataTable thead > tr > th.sorting, .agenda-panel table.dataTable thead > tr > td.sorting_asc, .agenda-panel table.dataTable thead > tr > td.sorting_desc, .agenda-panel table.dataTable thead > tr > td.sorting {
+        padding-right: 25px;
+    }
+
+    .agenda-panel table.dataTable thead .sorting:after, .agenda-panel table.dataTable thead .sorting_asc:after, .agenda-panel table.dataTable thead .sorting_desc:after, .agenda-panel table.dataTable thead .sorting_asc_disabled:after, .agenda-panel table.dataTable thead .sorting_desc_disabled:after {
+        bottom: 6px;
+        right: 6px;
+    }
+
+    .cal-context .tab-pane {
+        padding: 25px 5px 5px 5px !important;
+    }
+
+    .agenda-panel .dataTables_wrapper:first-child {
+        padding-top: 0;
+    }
+
+    .agenda-panel .dataTables_wrapper > .row:first-of-type > div {
+        margin: 0;
+    }
+}
+
+.cal-event-time-bar {
+    padding: 0 15px;
+    margin: 0 -15px;
+    height: 50px;
+}
+
+.cal-event-time-bar .slider.slider-horizontal {
+    float: left;
+    width: calc(100% - 80px);
+    margin-top: 7px;
+}
+
+.cal-event-time-bar .slider-step-btn {
+    float: left;
+    width: 40px;
+    color: #337ab7;
+}
+
+.cal-event-time-bar .slider .tooltip.top {
+    margin-top: -36px;
+    z-index: 10;
+}
+
+.cal-event-time-bar .slider .tooltip-inner {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.cal-event-time-bar .slider .slider-tick:not(.in-selection) {
+    background-image: linear-gradient(to bottom, #d7f2ff, #d0f0ff);
+}
+
+.cal-event-time-bar .slider-handle:hover {
+    cursor: grabbing;
+}
+
+.cal-event-agenda-filter {
+    margin-top: 30px;
+    padding: 0 30px;
+}
+
+.cal-event-location {
+    display: table;
+    width: inherit;
+    margin: 6px 0;
+}
+
+.cal-event-location > button, .cal-event-location > div {
+    margin: 0 2px;
+}
+
+.cal-event-location > button {
+    width: 40px;
+}
+
+.cal-context .tab-pane {
+    padding-top: 25px;
+}
+
+.cal-event-breadcrumb-trail #content {
+    text-align: center;
+}
+
+#CalendarContainer .cal-events-num {
+    margin-top: 15px;
+    background-color: #5bc0de;
+}
+
+.cal-month-day-number-events {
+    position: absolute;
+    display: none;
+    top: 5px;
+    left: 5px;
+    border-radius: 0.5em;
+    border-top-left-radius: 0;
+}
+
+.cal-cell:hover .cal-month-day-number-events {
+    display: block;
+}
+
+[data-event-class="event-important"] .event-priority {
+    vertical-align: super;
+    font-size: smaller;
+    margin: 1px;
+}

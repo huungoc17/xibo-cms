@@ -1,0 +1,91 @@
+{#
+/**
+ * Copyright (C) 2022 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#}
+
+{% extends "form-base.twig" %}
+{% import "forms.twig" as forms %}
+
+{% block formTitle %}
+    {% set layout = layout.layout %}
+    {% trans %}Publish {{ layout }}{% endtrans %}
+{% endblock %}
+
+{% block formButtons %}
+    {% trans "Cancel" %}, XiboDialogClose()
+    {% trans "Publish" %}, $("#layoutPublishForm").submit()
+{% endblock %}
+
+{% block formFieldActions %}
+    [{
+    "field": "publishNow",
+    "trigger": "init",
+    "value": true,
+    "operation": "is:checked",
+    "actions": {
+    ".publish-date-control": { "display": "none" }
+    }
+    },{
+    "field": "publishNow",
+    "trigger": "change",
+    "value": true,
+    "operation": "is:checked",
+    "actions": {
+    ".publish-date-control": { "display": "none" }
+    }
+    },{
+    "field": "publishNow",
+    "trigger": "init",
+    "value": false,
+    "operation": "is:checked",
+    "actions": {
+    ".publish-date-control": { "display": "" }
+    }
+    },{
+    "field": "publishNow",
+    "trigger": "change",
+    "value": false,
+    "operation": "is:checked",
+    "actions": {
+    ".publish-date-control": { "display": "" }
+    }
+    }]
+{% endblock %}
+
+{% block callBack %}layoutPublishFormOpen{% endblock %}
+
+{% block formHtml %}
+    <div class="row">
+        <div class="col-md-12">
+            <form id="layoutPublishForm" class="XiboForm form-horizontal" method="put" action="{{ url_for("layout.publish", {id: layout.layoutId}) }}">
+				{{ forms.message("Are you sure you want to publish this Layout? If it is already in use the update will automatically get pushed."|trans) }}
+
+                {% set title %}{% trans "Publish Now?" %}{% endset %}
+                {% set helpText %}{% trans "When selected, layout will be published immediately, if it should be published at a specific time, uncheck this checkbox and pick a date in the field below" %}{% endset %}
+                {{ forms.checkbox("publishNow", title, 1, helpText) }}
+
+                {% set title %}{% trans "Publish Date" %}{% endset %}
+                {% set helpText %}{% trans "Select the date and time to publish the layout" %}{% endset %}
+                {{ forms.dateTime("publishDate", title, layout.publishedDate, helpText, "publish-date-control", "") }}
+            </form>
+        </div>
+    </div>
+{% endblock %}

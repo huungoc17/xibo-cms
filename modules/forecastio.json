@@ -1,0 +1,7 @@
+{
+  "title": "Weather Module",
+  "author": "Xibo Signage Ltd",
+  "description": "A module for displaying weather information. Weather data provided by Open Weather Map.",
+  "name": "forecastio",
+  "class": "Xibo\\Widget\\ForecastIo"
+}

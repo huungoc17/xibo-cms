@@ -1,0 +1,1975 @@
+/*!
+ * Copyright (C) 2022 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+// Imports
+@import "variables";
+@import "mixins";
+
+// Colours
+$designer-color-background: $xibo-color-blue-lightest;
+$designer-colour-layout: $xibo-color-blue-lighter;
+$designer-colour-region: $xibo-color-orange;
+$designer-colour-widget: $xibo-color-green;
+
+$designer-module-bg-color: $xibo-color-white;
+$designer-module-border-color: $xibo-color-black;
+
+$designer-primary-color: $xibo-color-primary;
+$designer-secondary-color: $xibo-color-secondary;
+
+$layout-main-bg-color: $xibo-color-blue-lighter;
+$layout-main-fg-color: $xibo-color-black;
+$layout-hover-color: lighten($layout-main-bg-color, 20%);
+$layout-selected-color: lighten($layout-main-bg-color, 10%);
+
+$region-main-bg-color: $xibo-color-orange;
+$region-main-fg-color: $xibo-color-gray-darker;
+$region-hover-color: darken($region-main-bg-color, 5%);
+$region-selected-color: darken($region-main-bg-color, 15%);
+
+$widget-main-bg-color: $xibo-color-green;
+$widget-main-fg-color: $xibo-color-black;
+$widget-hover-color: darken($widget-main-bg-color, 5%);
+$widget-selected-color: darken($widget-main-bg-color, 15%);
+
+$timeline-widget-bg-color: $xibo-color-white;
+$timeline-widget-fg-color: $xibo-color-black;
+$timeline-widget-fg-color2: darken($xibo-color-gray-dark, 30%);
+$timeline-widget-border-color: $xibo-color-gray-dark;
+$timeline-widget-to-sort-bg-color: $xibo-color-yellow;
+
+$timeline-ghost-bg-color: $xibo-color-gray-dark;
+$timeline-ghost-fg-color: $xibo-color-gray-darker;
+
+$timeline-transition-in-bg-color: darken($xibo-color-green, 30%);
+$timeline-transition-out-bg-color: darken($xibo-color-red, 30%);
+$timeline-transition-in-fg-color: $xibo-color-green;
+$timeline-transition-out-fg-color: $xibo-color-red;
+
+$viewer-player-bg-colour: $xibo-color-black;
+$viewer-preview-text-colour: darken($xibo-color-white, 30%);
+$viewer-preview-text-shadow-colour: darken($xibo-color-white, 60%);
+$viewer-inline-editor-shadow: $xibo-color-red;
+$viewer-inline-editor-overlay-fg-colour: $xibo-color-white;
+$viewer-inline-editor-overlay-bg-colour: $xibo-color-secondary;
+
+$navigator-shadow-colour: $xibo-color-white;
+$navigator-non-editable-shadow-colour: $xibo-color-gray-dark;
+
+$drawer-bg-color: lighten($xibo-color-blue-pastel, 5%);
+$drawer-fg-color: $xibo-color-white;
+$drawer-toggle-bg-color: $xibo-color-blue-pastel;
+$drawer-toggle-fg-color: $xibo-color-white;
+$drawer-drop-bg-color: $xibo-color-gray-light;
+$drawer-drop-fg-color: $xibo-color-black;
+$drawer-search-bar-color: darken($xibo-color-blue-pastel, 10%);
+$drawer-hover-color: lighten($xibo-color-blue-pastel, 30%);
+
+$unsuccess-message-bg-color: darken($xibo-color-red, 30%);
+$layout-status-popover-message-bg-color: $xibo-color-red;
+
+// Variables
+$properties-panel-width: 400px;
+$designer-overlay-z-index: 1050;
+$designer-z-index-select: 10;
+$timeline-max-height: 250px;
+$inline-editing-z-index: 1040;
+
+// CSS
+
+#layout-editor.view-mode {
+    background-color: $xibo-color-gray-dark;
+
+    #layout-editor-topbar, #layout-editor-bottombar {
+        .navbar {
+            background-color: $xibo-color-gray;
+        }
+
+        #read-only-message {
+            cursor: pointer;
+            display: block;
+            font-size: 1.1rem;
+            margin: 0 16px;
+            padding: 0 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            height: 24px;
+            opacity: 0.85;
+
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+}
+
+/* Flex structure */
+.layout-editor-flex {
+    display: flex;
+
+    .flex-h {
+        display: flex;
+        flex: 1;
+        flex-flow: row;
+        justify-content: space-between;
+    }
+
+    .flex-v {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+    }
+
+    .min-fix {
+        min-width: 0;
+    }
+
+    .rowspan2 {
+        flex: 1 1 100%;
+    }
+}
+
+.container-designer {
+    height: calc(100vh - 90px);
+}
+
+.main-panel {
+    flex: 1;
+
+    .main-panel-wrapper {
+        position: relative;
+        height: 100%;
+        padding: 8px;
+        background-color: $xibo-color-black;
+        border-width: 4px;
+        border-style: solid;
+        @include border-radius(4px 4px 0 0);
+    }
+}
+
+/* Toggle Panels */
+.toggle-panel {
+    .toggle-container {
+        background-color: $xibo-color-gray-light;
+        width: 100%;
+        height: 8px;
+
+        .toggle {
+            color: $xibo-color-primary-lighter;
+            top: -13px;
+            width: 50px;
+            height: 13px;
+            background-color: $xibo-color-gray-light;
+            position: relative;
+            border-radius: 18px 18px 0px 0;
+            left: 50%;
+            transform: translateX(50%);
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 1;
+        }
+    }
+
+    .hide-closed {
+        display: inline;
+    }
+
+    .hide-opened {
+        display: none;
+    }
+
+    &.opened {
+        .hide-closed {
+            display: none;
+        }
+
+        .hide-opened {
+            display: inline;
+        }
+    }
+}
+
+.properties-panel-container {
+    flex: 0;
+    width: 0;
+    height: 100%;
+    display: flex;
+
+    .toggle-container {
+        background-color: $xibo-color-white-pure;
+        height: 100%;
+        width: 8px;
+
+        .toggle {
+            background-color: $xibo-color-white-pure;
+            left: -13px;
+            height: 50px;
+            width: 13px;
+            border-radius: 18px 0 0 18px;
+            top: 50%;
+            transform: translateY(-50%);
+
+            i {
+                top: 50%;
+                position: absolute;
+                transform: translateY(-50%);
+            }
+        }
+    }
+
+    &.opened {
+        width: auto;
+        .toggle-container {
+            width: 0;
+        }
+    }
+}
+
+.toggle-flex {
+    flex-basis: 6px !important;
+}
+
+.timeline-panel {
+    background: $xibo-color-gray-light;
+    width: 100%;
+
+    &:not(.opened) {
+        height: 6px;
+    }
+
+    &.opened .toggle-container {
+        height: 2px;
+    }
+}
+
+@import "header-center-logo";
+
+/* Main Editor */
+#layout-editor {
+    overflow: hidden;
+    margin: 0 -15px -15px -15px;
+    background-color: $designer-color-background;
+
+    /* SCROLLBAR */
+    scrollbar-color: $xibo-color-blue-darker lighten($xibo-color-blue-darker, 30%); /* For firefox */
+    scrollbar-width: thin; /* For firefox */
+
+    #fullscreenBtn, #goBackBtn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        opacity: 0.9;
+        font-size: 1rem;
+        background-color: $xibo-color-white-pure;
+        color: $xibo-color-blue;
+        z-index: 1;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    #goBackBtn {
+        left: 6px;
+        right: auto;
+    }
+
+    /* width */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+        background: $xibo-color-white;
+        @include border-radius(6px);
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+        background: $xibo-color-blue-darker;
+        @include border-radius(4px);
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+        background: lighten($xibo-color-blue-darker, 20%);
+    }
+
+    ::-webkit-scrollbar-corner {
+        @include box-shadow(inset 0 0 5px $xibo-color-gray-dark);
+    }
+
+    .back-button {
+        position: fixed;
+        left: 16px;
+        top: 8px;
+
+        span {
+            margin-left: 6px;
+            font-weight: bold;
+        }
+    }
+
+    .center-msg {
+        position: relative;
+        text-align: center;
+        font-size: 1.4rem;
+        overflow: hidden;
+        font-weight: bold;
+        @include set-transparent-color(color, $xibo-color-white, 0.5);
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .hide-on-fs {
+        display: inline-block;
+    }
+
+    .show-on-fs {
+        display: none;
+    }
+
+    &.inline-edit-mode {
+        .custom-overlay {
+            display: block !important;
+            opacity: 0.3;
+            z-index: $inline-editing-z-index;
+        }
+
+        .main-panel {
+            z-index: calc(#{$inline-editing-z-index} + 10);
+
+            button {
+                display: none;
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    #layout-editor {
+        margin-top: 50px;
+    }
+}
+
+/* Layout timeline */
+#layout-editor #layout-timeline {
+    max-width: calc(100% - 40px);
+    min-width: 60%;
+    max-height: $timeline-max-height;
+    margin: 4px 0;
+
+    #timeline-container {
+        display: flex;
+        background-color: $xibo-color-white;
+    }
+
+    /* Region Container */
+    $timeline-region-info-width: 180px;
+    $timeline-region-preview-width: 60px;
+    $timeline-timeruler-height: 28px;
+    $timeline-region-height: 48px;
+
+    .timeline-left-panel {
+        background-color: $xibo-color-blue-lightest;
+        border-radius: 0 0 4px 0;
+        max-height: $timeline-max-height;
+        overflow: hidden;
+    }
+
+    #regions-container {
+        display: inline-block;
+        width: calc(100% - #{$timeline-region-info-width});
+        overflow: auto;
+        max-height: $timeline-max-height;
+    }
+
+    .empty-timeline {
+        cursor: pointer;
+        width: 100%;
+        background-color: $xibo-color-blue-lightest;
+        display: table;
+        text-align: center;
+        min-height: 86px;
+
+        .empty-timeline-message {
+            font-size: 1.1rem;
+            color: $xibo-color-blue;
+            vertical-align: middle;
+            display: table-cell;
+        }
+    }
+
+    #timeruler {
+        width: 100%;
+        height: $timeline-timeruler-height;
+        background-color: $xibo-color-black;
+        overflow: hidden;
+        white-space: nowrap;
+        font-size: 0;
+        opacity: 0.9;
+        position: -webkit-sticky; /* Safari */
+        position: sticky;
+        top: 0;
+        z-index: 1;
+
+        .timeruler-message {
+            color: white;
+            font-size: 13px;
+            padding-left: 6px;
+            line-height: 21px;
+        }
+
+        .step-margin {
+            display: inline-block;
+            height: 10px;
+        }
+
+        .step {
+            display: inline-block;
+            border-left: $xibo-color-white 2px solid;
+            height: 10px;
+            vertical-align: top;
+
+            &.labelled {
+                color: $xibo-color-white;
+                font-size: 0.85rem;
+                height: 18px;
+                line-height: 34px;
+
+                span {
+                    padding-left: 2px;
+                }
+            }
+        }
+    }
+
+    #regions-info {
+        float: left;
+        width: $timeline-region-info-width;
+        margin-bottom: 12px;
+
+        .designer-region-info {
+            background-color: $xibo-color-blue-pastel;
+            color: $xibo-color-white;
+            height: $timeline-region-height;
+            margin: 3px;
+            font-size: 1rem;
+            @include border-radius(4px);
+
+            &.selected-region {
+                color: $designer-colour-region;
+                font-weight: bold;
+            }
+
+            .region-preview {
+                float: left;
+                width: $timeline-region-preview-width;
+                height: $timeline-region-height;
+                margin-left: 6px;
+                overflow: hidden;
+
+                .region-preview-background {
+                    position: relative;
+                    background-color: $xibo-color-black-pure;
+                }
+
+                .region-preview-element {
+                    position: relative;
+                    background-color: $xibo-color-orange-darker;
+                }
+            }
+
+            .region-controls {
+                display: inline-block;
+                padding: 2px 6px;
+                line-height: 22px;
+                width: calc(#{$timeline-region-info-width} - #{$timeline-region-preview-width} - 12px);
+
+                .region-label {
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    overflow: hidden;
+                }
+            }
+        }
+    }
+
+    /* Controls Container */
+    #timeline-controls {
+        font-size: 1.15rem;
+        line-height: 20px;
+        width: $timeline-region-info-width;
+        padding: 4px 8px;
+        background-color: $xibo-color-primary;
+        position: -webkit-sticky; /* Safari */
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    /* Timeline buttons */
+    .designer-region-info, #timeline-controls {
+        a {
+            cursor: pointer;
+            text-decoration: none;
+            color: $xibo-color-white;
+
+            &:hover {
+                color: darken($color: $xibo-color-white, $amount: 20%);
+            }
+
+            &[disabled] {
+                color: darken($color: $xibo-color-white, $amount: 50%);
+            }
+        }
+
+        span {
+            color: $xibo-color-white;
+            font-size: 1rem;
+            line-height: 1.2rem;
+        }
+    }
+
+    /* Designer Region */
+    .designer-region {
+        background: $region-main-bg-color;
+        height: 48px;
+        padding: 2px;
+        margin: 3px 0;
+        @include border-radius(4px);
+        display: flex;
+        display: -webkit-box;
+        display: -moz-box;
+
+        &:not(.editable) {
+            @include box-shadow(inset 0 0 6px 4px $xibo-color-gray-dark);
+        }
+
+        .message {
+            color: $region-main-fg-color;
+            font-weight: bold;
+            padding: 10px;
+        }
+    }
+
+    .label-region {
+        height: 40px;
+        padding: 10px 2px 0 0;
+        text-align: right;
+        font-weight: bold;
+        margin-bottom: 4px;
+        color: $region-main-fg-color;
+    }
+
+    /* Designer Widget */
+    .designer-widget {
+        position: relative;
+        background: $timeline-widget-bg-color;
+        color: $timeline-widget-fg-color;
+        font-weight: bold;
+        height: 100%;
+        border: none;
+        @include box-shadow(inset 0 0 0 1px $timeline-widget-border-color);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0;
+        @include border-radius(4px);
+
+        .widgetLabel {
+            float: left;
+            height: inherit;
+            color: $designer-module-bg-color;
+            min-width: 20px;
+            height: calc(100% - 2px);
+            text-align: center;
+            opacity: 0.85;
+            padding: 0 4px;
+            margin-left: 4px;
+            margin-top: 1px;
+            font-size: 13px;
+
+            .widgetDuration {
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+                padding: 0 2px;
+            }
+        }
+
+        .widgetName {
+            font-style: italic;
+            color: $timeline-widget-fg-color;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 90%;
+            padding-left: 4px;
+        }
+
+        .widgetProperties {
+            float: right;
+            position: absolute;
+            z-index: 2;
+            right: 4px;
+            top: 24px;
+        }
+
+        .widget-transition-container {
+            position: absolute;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .widget-transition {
+            cursor: pointer;
+            position: absolute;
+            width: 100%;
+            top: 70%;
+            height: 30%;
+            opacity: 0.3;
+            font-size: 0.65rem;
+            color: $xibo-color-white;
+        }
+
+        .widget-transition:hover {
+            top: 50%;
+            height: 50%;
+            opacity: 0.6;
+            font-size: 1rem;
+        }
+
+        .widget-transition-container.transition-in {
+            left: 0;
+            border-right: $timeline-transition-in-fg-color solid 2px;
+        }
+
+        .widget-transition-container.transition-out {
+            right: 0;
+            border-left: $timeline-transition-out-fg-color solid 2px;
+        }
+
+        .widget-transition.transition-in {
+            background: $timeline-transition-in-bg-color;
+             @include border-radius(80% 0 0 0);
+            text-align: right;
+            padding-right: 5px;
+        }
+
+        .widget-transition.transition-out {
+            background: $timeline-transition-out-bg-color;
+            @include border-radius(0 80% 0 0);
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        &.hideContent > * {
+            display: none;
+        }
+
+        i.editProperty {
+            float: right;
+            cursor: pointer;
+            padding: 2px;
+            color: $widget-main-fg-color;
+        }
+
+        i.editProperty:hover {
+            color: lighten($widget-main-fg-color, 20%);
+        }
+
+        &.invalid-widget:before {
+            @include box-shadow(inset 0px 0px 6px 4px $xibo-color-red);
+            content: ' ';
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: calc(100% - 2px);
+            height: calc(100% - 2px);
+            @include border-radius(3px);
+        }
+
+        /* Highlight animation */
+        &:after {
+            content: ' ';
+            position: absolute;
+            opacity: 0;
+            top: 1px;
+            left: 1px;
+            width: calc(100% - 2px);
+            height: calc(100% - 2px);
+            @include border-radius(3px);
+            @include box-shadow(inset 0 0 2px 2px $designer-colour-widget);
+            background-color: darken($designer-colour-widget, 20%);
+            transition: opacity 0.3s;
+        }
+
+        /* Transition to showing the bigger shadow on hover */
+        &.highlighted:after {
+            opacity: 0.6;
+        }
+    }
+
+    /* Designer Widget Ghost */
+    .designer-widget-ghost {
+        @include set-transparent-color(background, $timeline-ghost-bg-color, 0.6);
+        color: $timeline-ghost-fg-color;
+        font-weight: bold;
+        display: flex;
+        height: 100%;
+        opacity: 0.85;
+
+        .widgetName, .widgetSubType {
+            color: $timeline-ghost-fg-color;
+            margin-left: 4px;
+        }
+    }
+
+    .designer-widget-sortable-highlight {
+        background: $xibo-color-yellow;
+        float: left;
+        width: 20px;
+        height: 100%;
+        border: none;
+    }
+
+    .ghost-padding {
+        @include set-transparent-color(background, $xibo-color-black, 0.2);
+        float: left;
+        height: 100%;
+    }
+
+    .widgetExtension {
+        color: $timeline-ghost-fg-color;
+        padding: 0 4px;
+        font-weight: bold;
+        @include set-transparent-color(background, $xibo-color-white, 0.5);
+        height: 34px;
+        margin-top: 5px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* Layout Viewer */
+#layout-editor #layout-viewer-container {
+    height: calc(100% - 64px);
+    padding: 16px 24px 0px 16px;
+
+    .main-panel-wrapper {
+        border-color: $xibo-color-blue-pastel;
+    }
+
+    // Inline editor controls
+    #inline-editor-templates {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        z-index: 2;
+        @include set-transparent-color(background-color, $xibo-color-blue, 0.8);
+        @include border-radius(0 4px 0 0);
+        opacity: 0.75;
+
+        &:hover {
+            opacity: 0.85;
+        }
+
+        .control-label {
+            padding: 5px;
+            margin: 0;
+            text-align: right;
+            color: $xibo-color-white-pure;
+            font-weight: bold;
+        }
+
+        /* CKEditor controls */
+        .ckeditor_controls {
+            padding: 0 !important;
+
+            > div {
+                padding: 2px 5px;
+                min-width: 240px;
+                margin: 0;
+            }
+
+            .form-group {
+                margin-bottom: 0 !important;
+            }
+
+            .select2-container--bootstrap .select2-selection--single {
+                height: 26px;
+                padding: 2px 24px 2px 4px;
+            }
+        }
+
+        .ckeditor_select_container {
+            padding: 3px 0;
+            margin: 0;
+        }
+    }
+
+    #layout-viewer {
+        height: 100%;
+        border: none;
+        background: $viewer-player-bg-colour;
+        position: relative;
+        z-index: 1;
+
+        .layout-viewer-border {
+            @include set-transparent-color(background, $xibo-color-black, 0.9);
+            position: absolute;
+        }
+
+        .viewer-element {
+            position:relative;
+            overflow: hidden;
+        }
+
+        .viewer-element .module-preview-icon {
+            font-size: 4em;
+            margin-top: 10px;
+        }
+
+        .cke_textarea_inline {
+            display: none;
+        }
+
+        #viewer-preview iframe {
+            @include user-select-none();
+        }
+
+        #viewer-preview {
+            color: $viewer-preview-text-colour;
+            text-shadow: 0px 0px 2px $viewer-preview-text-shadow-colour;
+        }
+
+        .layout-player {
+            background: $viewer-player-bg-colour;
+        }
+
+        .designer-region {
+
+            &.empty-region {
+                width: 100%;
+                height: 100%;
+            }
+
+            .module-preview-icon {
+                font-size: 2em;
+            }
+
+            @include set-transparent-color(background, $xibo-color-gray, 0.6);
+
+            &::after {
+                content: ' ';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                @include box-shadow(inset 0 0 2px 0px $xibo-color-black);
+            }
+
+            .loading-icon {
+                font-size: inherit;
+            }
+
+            .center-msg {
+                font-size: 0.85rem;
+                overflow: visible;
+                position: absolute;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+
+            &:not(.empty) .preview-select {
+                cursor: pointer;
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                z-index: 1;
+            }
+
+            .preview-paging {
+                position: absolute;
+                color: $xibo-color-white;
+                display: none;
+                position: absolute;
+                min-width: 100%;
+                width: max-content;
+                height: 20px;
+                bottom: 0;
+                z-index: 2;
+                @include set-transparent-color(background, $xibo-color-black, 0.5);
+                opacity: 0.2;
+                padding: 0 4px;
+                white-space: nowrap;
+                left: 50%;
+                transform: translate(-50%, 0);
+            }
+
+            .preview-paging.active {
+                display: block;
+            }
+
+            .preview-paging-message {
+                font-weight: bold;
+                font-size: 1rem;
+            }
+
+            .preview-paging-name {
+                font-weight: bold;
+                font-style: italic;
+                max-width: 150px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .widget-arrow
+            {
+                display: none;
+                cursor: pointer;
+                padding: 2px 3px;
+            }
+
+            &:not(.empty):hover {
+                @include set-transparent-color(background, $xibo-color-white, 0.5);
+
+                &::after {
+                    @include box-shadow(inset 0 0 2px 1px $xibo-color-black);
+                }
+
+                .preview-paging.active {
+                    opacity: 0.9;
+                }
+            }
+        }
+    }
+
+    /* Viewer fullscreen */
+    &.fullscreen {
+        @include set-transparent-color(background-color, $xibo-color-black, 0.9);
+        position: fixed;
+        z-index: $designer-overlay-z-index;
+        left: 0;
+        top: 0;
+        padding: 0;
+        height: calc(100% - 38px);
+        width: 100%;
+
+        #inline-editor-templates, #fullscreenBtn, #goBackBtn {
+            z-index: calc(#{$designer-overlay-z-index} + 10);
+        }
+
+        #layout-viewer {
+            position: fixed; /* Stay in place */
+            z-index: calc(#{$designer-overlay-z-index} + 10);
+            left: 8px;
+            top: 8px;
+            width: calc(100% - 16px);
+            height: calc(100% - 54px);
+            @include set-transparent-color(background-color, $xibo-color-black, 0.9);
+        }
+
+        .hide-on-fs {
+            display: none;
+        }
+
+        .show-on-fs {
+            display: inline-block;
+        }
+    }
+}
+
+/* Viewer inline editor */
+#layout-editor {
+    #inline-editor {
+        height: inherit;
+    }
+
+    /* Inline Editor Overlay */
+    #inline-editor-overlay {
+        position: absolute;
+        text-align: center;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        @include set-transparent-color(background, $viewer-inline-editor-overlay-bg-colour, 0.2);
+        @include box-shadow(inset $viewer-inline-editor-overlay-bg-colour 0px 0px 10px 0px);
+
+        &:hover {
+            @include set-transparent-color(background, $viewer-inline-editor-overlay-bg-colour, 0.5);
+        }
+
+        .edit-btn-container {
+            display: table;
+            width: 100%;
+            height: 100%;
+
+            #edit-btn {
+                font-size: 4.3rem;
+                text-shadow: 0px 0px 5px $xibo-color-black;
+                @include set-transparent-color(color, $viewer-inline-editor-overlay-fg-colour, 0.8);
+                vertical-align: middle;
+                display: table-cell;
+
+                &:hover {
+                    @include set-transparent-color(color, $viewer-inline-editor-overlay-fg-colour, 0.9);
+                }
+            }
+        }
+    }
+
+    .inline-editor-opened,
+    .inline-editor-closed,
+    .inline-editor-closed#inline-editor-overlay {
+        display: none;
+    }
+}
+
+/* Properties Panel */
+#layout-editor #properties-panel {
+    padding: 0;
+    width: $properties-panel-width;
+    height: 100%;
+
+    .nav {
+        width: 100% !important;
+        border: none;
+
+        .nav-item {
+            flex: 1 1 auto;
+            text-align: center;
+        }
+    }
+
+    .hidden {
+        margin-right: -370px;
+    }
+
+    .unsuccessMessage {
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.2em;
+        color: $xibo-color-white;
+        padding: 30px;
+        background-color: $unsuccess-message-bg-color;
+    }
+
+    .loading-container {
+        position: relative;
+        background: $xibo-color-white;
+        border: none;
+
+        .loading-icon {
+            color: $xibo-color-primary;
+        }
+    }
+
+    #properties-panel-container {
+        background: $xibo-color-white-pure;
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+
+        /* Hide playlist editor only messages */
+        .playlist-editor-message {
+            display: none;
+        }
+
+        .form-title {
+            display: none;
+        }
+
+        .form-container {
+            overflow-x: hidden;
+            overflow-y: auto;
+            height: 100%;
+
+            & > .row {
+                height: 100%;
+
+                & > div {
+                    height: calc(100% - 65px);
+                    padding: 4px !important;
+
+                    & > form {
+                        height: 100%;
+                        overflow-x: hidden;
+                        overflow-y: auto;
+
+                        .form-group {
+
+                            & > .label {
+                                max-width: 100%;
+                                text-align: left;
+                            }
+
+                            & > div {
+                                max-width: 100%;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .nav > li > a {
+                color: $xibo-color-secondary;
+                background-color: $xibo-color-white-pure !important;
+                border-color: $xibo-color-secondary !important;
+                border-width: 0px 0px 2px 0px !important;
+                font-size: 0.9rem;
+                font-weight: bold;
+                opacity: 50%;
+                padding-bottom: 7px;
+                text-transform: uppercase;
+
+                &.active {
+                    opacity: 100%;
+                    border-width: 0px 0px 4px 0px !important;
+                    padding-bottom: 5px;
+                }
+            }
+
+            .card {
+                border: none;
+            }
+
+            .row > div {
+                padding: 6px;
+                margin: 0;
+            }
+
+            .row > div > form {
+                padding: 0 6px;
+
+                .row > div  {
+                    padding: 4px 8px;
+                }
+
+                .form-group {
+                    display: flex;
+                    margin-right: -5px;
+                    margin-left: -5px;
+
+                    .col-sm-2 {
+                        flex: 0 0 22%;
+                        max-width: 22%;
+                    }
+
+                    .col-sm-10 {
+                        flex: 0 0 78%;
+                        max-width: 78%;
+                    }
+
+                    .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9 {
+                        padding-left: 4px;
+                        padding-right: 4px;
+                    }
+
+                    .offset-sm-2 {
+                        margin-left: 22%;
+                    }
+                }
+
+                .sub-playlists {
+                    margin-left: -10px;
+                }
+
+                .row-special {
+                    margin-right: -5px;
+                    margin-left: -5px;
+
+                    .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9 {
+                        padding-left: 3px;
+                        padding-right: 3px;
+                    }
+                }
+
+                #orderClause {
+                    .form-group {
+                        padding: 0;
+                        margin-left: 4px;
+                        margin-right: 0;
+                        display: inline-block;
+                    }
+                }
+
+                #filterClause {
+                    .form-group {
+                        padding: 0;
+                        margin: 0;
+                        display: inline-block;
+                    }
+
+                    select, input {
+                        padding: 5px;
+                        max-width: 90px;
+                    }
+
+                    select {
+                        max-width: 120px;
+                    }
+                }
+
+                #worldClocksContainer {
+                    .form-group {
+                        padding: 2px 0;
+                        margin: 0;
+                        display: inline-block;
+                    }
+
+                    select, input[type="text"] {
+                        max-width: 95%;
+                    }
+
+                    .select2 {
+                        width: 95% !important;
+                        text-align: left;
+                    }
+
+                    button {
+                        padding: 5px 10px;
+                        margin: 3px 0;
+                    }
+
+                    input[type="checkbox"] {
+                        margin: 8px 0;
+                    }
+                }
+
+                /* Layout background form special case */
+                #layoutEditFormBackgroundUpload {
+                    .upload-table-container {
+                        overflow-x: auto;
+
+                        table td {
+                            max-width: 100px;
+
+                            canvas {
+                                max-width: 60px;
+                                max-height: 60px;
+                            }
+
+                            input[type="text"] {
+                                max-width: 100px;
+                            }
+
+                            .progress {
+                                min-width: 80px;
+                            }
+                        }
+                    }
+                }
+
+                #actions_wrapper {
+                    overflow-x: auto;
+                    .row > div {
+                        padding: 0;
+
+                        .table th, .table td {
+                            padding: 0.5rem;
+                        }
+                    }
+
+                    .row:nth-of-type(3) > div {
+                        flex: 0 0 100% !important;
+                        max-width: 100% !important;
+                    }
+                }
+
+                #zonesContainer {
+                    .structure, .categoriesNotAssigned {
+                        display: grid;
+                        width: 100%;
+                    }
+
+                    .connectedlist {
+                        outline: 2px solid $xibo-color-blue-lighter;
+                        outline-offset: -1px;
+                        background-color: lighten($xibo-color-blue-lighter, 10%);
+
+                        ul.ui-sortable {
+                            width: 100%;
+                            min-height: 90px;
+                            margin: 0;
+                            background-color: initial;
+
+                            ul {
+                                height: 100%;
+                            }
+
+                            li {
+                                width: initial;
+                                text-align: center;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .form-content-title {
+                margin: -5px 0 10px 0;
+                padding: 5px 0;
+                border-bottom: 1px solid #e5e5e5;
+
+                h4 {
+                    font-size: 18px;
+                    line-height: 38px;
+                    margin: 0;
+                    padding: 0px 8px;
+                }
+            }
+
+            table td span.label {
+                white-space: inherit;
+            }
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column-reverse;
+            padding: 0 4px;
+            bottom: 0;
+            font-size: 0;
+            width: 100%;
+
+            & > button {
+                margin: 4px 0;
+            }
+        }
+
+        &.form-editor-enabled {
+            .form-container, form {
+                margin-left: -450px !important;
+                padding-left: 450px !important;
+
+                div.cke:hover {
+                    position: absolute;
+                    right: 4px;
+                    width: 810px;
+                    z-index: 3;
+                }
+            }
+        }
+    }
+}
+
+/* Layout Navigator */
+#layout-editor #layout-navigator {
+    display: none;
+    height: calc(100% - 64px);
+    padding: 16px 24px 0px 16px;
+
+    .main-panel-wrapper {
+        border-color: $xibo-color-orange-darker;
+    }
+
+    .layout {
+        overflow: hidden;
+        @include box-shadow(inset 0 0 2px 1px $navigator-shadow-colour);
+    }
+
+    .designer-region {
+        @include box-shadow(inset 0 0 2px 0px $navigator-shadow-colour);
+    }
+
+    .designer-region:not(.editable) {
+        @include box-shadow(inset 0 0 2px 0px $navigator-non-editable-shadow-colour);
+    }
+
+    #layout-navigator-content {
+        background: $xibo-color-black;
+        min-height: 100%;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Navigator fullscreen */
+    &.fullscreen {
+        @include set-transparent-color(background-color, $xibo-color-black, 0.9);
+        position: fixed;
+        z-index: 1050;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 0;
+        height: calc(100% - 38px);
+
+        #fullscreenBtn {
+            z-index: calc(#{$designer-overlay-z-index} + 10);
+        }
+
+        #layout-navigator-content {
+            z-index: $designer-overlay-z-index; /* Sit on top */
+            left: 8px;
+            top: 8px;
+            width: calc(100% - 16px);
+            height: calc(100% - 54px);
+            @include set-transparent-color(background-color, $xibo-color-black, 0.9);
+        }
+
+        .hide-on-fs {
+            display: none;
+        }
+
+        .show-on-fs {
+            display: inline-block;
+        }
+    }
+}
+
+/* Object selection */
+#layout-editor {
+    .selectable {
+        @include user-select-none();
+    }
+
+    .designer-region.selectable:hover {
+        background: $region-hover-color !important;
+    }
+
+    /* Timeline */
+    #layout-timeline {
+        .designer-region .designer-region-overlay {
+            display: none;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+            position: absolute;
+            @include border-radius(4px);
+
+            div {
+                position: relative;
+                display: block;
+                float: left;
+                height: 100%;
+            }
+
+            margin-right: -6px;
+
+            .designer-region-overlay-step {
+                background: darken($xibo-color-white, 20%);
+                width: 14px;
+                margin: 0;
+
+                &:hover, &.ui-droppable-hover {
+                    background: $xibo-color-white;
+                    @include box-shadow(0px 0px 3px 1px $xibo-color-white);
+                }
+
+                &:not(:first-child) {
+                    margin-left: -5px;
+                    margin-right: 5px;
+                }
+            }
+        }
+
+        .designer-widget.selectable:hover {
+            background: $widget-hover-color !important;
+        }
+    }
+
+    .selected-region:not(.designer-region-info) {
+        background: $region-selected-color !important;
+    }
+
+    #layout-navigator .designer-region.selected-widget,
+    .designer-widget.selected-widget {
+        background: $widget-selected-color !important;
+    }
+
+    /* Navigator & Viewer */
+    #layout-navigator, #layout-viewer {
+        .designer-region.ui-droppable-active {
+            @include z-index-set($designer-z-index-select);
+            background: $region-hover-color !important;
+
+            &.ui-droppable-hover,
+            &:hover {
+                background: darken($region-hover-color, 20%) !important;
+            }
+
+            * {
+                visibility: hidden;
+            }
+        }
+
+        .widget-preview.ui-droppable-active {
+            @include z-index-set($designer-z-index-select);
+            background: $widget-hover-color !important;
+            width: 100%;
+            height: 100%;
+
+            &.ui-droppable-hover,
+            &:hover {
+                background: darken($widget-hover-color, 20%) !important;
+            }
+
+            * {
+                visibility: hidden;
+            }
+        }
+
+        .layout.ui-droppable-active {
+            @include z-index-set($designer-z-index-select);
+            background: $layout-hover-color !important;
+        }
+
+        .layout.ui-droppable-active.ui-droppable-hover,
+        .layout.ui-droppable-active:hover {
+            background: darken($layout-hover-color, 10%) !important;
+        }
+
+        .layout.ui-droppable-active * {
+            visibility: hidden;
+        }
+    }
+
+    .ui-droppable-active {
+        @include box-shadow(inset 0 0 2px $xibo-color-white);
+    }
+
+    /* Timeline */
+    .timeline-panel.opened {
+
+        #layout-timeline .designer-widget.ui-droppable-active {
+            @include z-index-set($designer-z-index-select);
+            background: $widget-hover-color;
+            visibility: visible;
+        }
+
+        #layout-timeline .designer-widget.ui-droppable-active.ui-droppable-hover,
+        #layout-timeline .designer-widget.ui-droppable-active:hover {
+            background: darken($widget-hover-color, 10%);
+        }
+
+        #layout-timeline .designer-region.to-sort .designer-widget {
+            background: $timeline-widget-to-sort-bg-color !important;
+        }
+
+        #layout-timeline .designer-region.ui-droppable-active {
+            @include z-index-set($designer-z-index-select);
+
+            .designer-region-overlay {
+                background: $region-hover-color;
+                display: block;
+                opacity: 0.75;
+            }
+
+            &.ui-droppable-hover, &:hover {
+                .designer-region-overlay {
+                    background: darken($region-hover-color, 20%);
+                }
+            }
+        }
+        #actions-drawer-content {
+            &.ui-droppable-active {
+                @include z-index-set($designer-z-index-select);
+                background: $drawer-hover-color;
+
+                &.ui-droppable-hover,
+                &:hover {
+                    background: darken($drawer-hover-color, 20%);
+                }
+
+                * {
+                    visibility: hidden;
+                }
+            }
+
+            .designer-widget {
+                &.ui-droppable-active {
+                    @include z-index-set($designer-z-index-select);
+                    background: $widget-hover-color;
+                    visibility: visible;
+                }
+
+                &.ui-droppable-active:hover {
+                    background: darken($widget-hover-color, 10%);
+                }
+            }
+        }
+    }
+
+    .ui-droppable-hover {
+        @include box-shadow(inset 0 0 4px #313131);
+    }
+}
+
+/* Loading Container */
+#layout-editor .loading-container {
+    height: calc(100vh - 130px);
+    width: 100%;
+    position: absolute;
+
+    .loading-icon {
+        position: relative;
+        text-align: center;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 5.35rem;
+        color: $xibo-color-primary;
+        z-index: 0;
+    }
+}
+
+/* Select2 width fix */
+#layout-editor .select2-container {
+    width: auto !important;
+}
+
+/* Locked mode */
+#layout-editor #lockedOverlay {
+    z-index: 1;
+    display: block;
+    position: absolute;
+}
+
+/* Locked mode message */
+#layout-editor #lockedLayoutMessage {
+    margin: 5px 5%;
+    padding: 10px;
+    width: 90%;
+    line-height: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: $designer-overlay-z-index;
+    position: fixed;
+    bottom: 0;
+}
+
+/* Hide or show content based on the lock */
+#layout-editor.locked-for-user {
+    .hide-on-lock {
+        display: none;
+    }
+
+    .designer-region .preview-paging {
+        z-index: 1;
+    }
+}
+
+#layout-editor:not(.locked) .show-on-lock, #layout-editor.locked.locked-for-user .show-on-lock {
+    display: none;
+}
+
+/* Resize unlock layout modal */
+#unlockLayoutModal .modal-content {
+    width: 60%;
+    margin: 0 auto;
+}
+
+/* Action drawer */
+#layout-editor #actions-drawer {
+    overflow: hidden;
+    display: flex;
+    flex-basis: 40px;
+    transition: flex-basis 600ms ease 0s;
+
+    #actions-drawer-content {
+        background-color: $drawer-bg-color;
+        width: calc(100% - 40px);
+        z-index: 1;
+
+        .actions-drawer-controls {
+            background-color: $drawer-search-bar-color;
+        }
+
+        #actions-drawer-search-bar {
+            height: 32px;
+            margin-bottom: 0;
+            color: $drawer-toggle-fg-color;
+            font-size: 0;
+            padding-right: 2px;
+            min-width: 120px;
+
+            i.fa-search {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            input {
+                background: center;
+                border: 1px solid #ced4da;
+                color: $drawer-search-bar-color;
+                height: 26px;
+                border-radius: 0.25rem;
+                background-color: #fff;
+                padding-left: 0.5rem;
+                margin: 2.5px 0;
+                font-size: 14px;
+                width: calc(100% - 29px);
+            }
+        }
+
+        #actions-drawer-widgets {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            grid-auto-flow: column;
+            justify-content: start;
+            overflow: hidden;
+            height: calc(100% - 32px);
+            gap: 5px;
+            padding: 3px;
+
+            /* width */
+            ::-webkit-scrollbar {
+                height: 8px;
+            }
+
+            /* Track */
+            ::-webkit-scrollbar-track {
+                @include border-radius(0);
+            }
+
+            /* Handle */
+            ::-webkit-scrollbar-thumb {
+                @include border-radius(0);
+            }
+
+            @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+                & {
+                    padding: 0 2px 0 2px;
+                }
+            }
+
+            .designer-widget {
+                width: 140px;
+                min-width: 140px;
+                height: 54px;
+                position: relative;
+                background: #f9f9f9;
+                color: $timeline-widget-fg-color;
+                font-weight: bold;
+                @include box-shadow(inset 0 0 0 1px $timeline-widget-border-color);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                @include border-radius(4px);
+
+                .widgetLabel {
+                    float: left;
+                    color: $designer-module-bg-color;
+                    width: 22px;
+                    height: calc(100% - 2px);
+                    text-align: center;
+                    opacity: 0.85;
+                    padding: 0 4px;
+                    margin-left: 4px;
+                    margin-top: 1px;
+                    font-size: 13px;
+                }
+
+                .widgetDuration {
+                    margin-top: -3px;
+                }
+
+                .widgetName {
+                    font-style: italic;
+                    color: $timeline-widget-fg-color;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    max-width: 90%;
+                    padding-left: 4px;
+                    text-align: left;
+                }
+
+                .widgetProperties {
+                    float: right;
+                    position: absolute;
+                    z-index: 2;
+                    right: 4px;
+                    top: 18px;
+                }
+
+                .targetInfo {
+                    position: absolute;
+                    background-color: #32353d;
+                    color: #f9f9f9;
+                    width: 114px;
+                    bottom: 1px;
+                    right: 0;
+                    height: 18px;
+                    opacity: 0.75;
+                    padding: 2px;
+
+                    &.no-target {
+                        color: #ff9191;
+                    }
+
+                    .info-text {
+                        font-size: 13px;
+                        line-height: 13px;
+                        max-width: 90px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                }
+
+                &.hideContent > * {
+                    display: none;
+                }
+
+                i.editProperty {
+                    float: right;
+                    cursor: pointer;
+                    padding: 2px;
+                    color: $widget-main-fg-color;
+                }
+
+                i.editProperty:hover {
+                    color: lighten($widget-main-fg-color, 20%);
+                }
+
+                &.invalid-widget:after {
+                    @include box-shadow(inset 0px 0px 2px 2px $xibo-color-red);
+                }
+
+                &:hover {
+                    background-color: $widget-hover-color;
+                }
+            }
+        }
+
+        .loading-container {
+            position: relative;
+            height: 100px;
+
+            .loading-icon {
+                font-size: 3.6rem;
+            }
+        }
+    }
+
+    #actions-drawer-toggle {
+        transition: background-color 1s ease 0s;
+        background-color: $drawer-toggle-bg-color;
+        color: $drawer-toggle-fg-color;
+        font-size: 1.3rem;
+        height: 100%;
+        width: 40px;
+        position: relative;
+        @include border-radius(6px 0px 0px 6px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #actions-drawer-empty-message {
+        position: relative;
+        border: 2px dashed $drawer-fg-color;
+        @include border-radius(6px);
+        color: $drawer-fg-color;
+        line-height: 75px;
+        margin: 0 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 100%;
+
+        div {
+            top: 50%;
+            position: relative;
+            transform: translateY(-50%);
+        }
+    }
+
+    &.drawed {
+        flex-basis: 40%;
+
+        #actions-drawer-toggle {
+            background-color: lighten($drawer-toggle-bg-color, 20%);
+        }
+
+        #actions-drawer-widgets {
+            overflow-x: auto !important;
+        }
+    }
+}
+
+/* Layout background image */
+.background-image-add {
+    position: relative;
+    min-height: 100px;
+    padding: 4px 0 7px 0;
+    background-color: $xibo-color-white;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-content: center;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: -3px;
+    flex-wrap: wrap;
+}
+
+.background-image-actions .btn-group {
+    width: 100%;
+    padding: 0;
+    background-color: $xibo-color-white-pure;
+    border-radius: 4px;
+}
+
+.background-image-drop {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    @include set-transparent-color(background-color, $xibo-color-blue, 0.6);
+    border-radius: 6px;
+    padding: 3rem 1rem;
+    color: $xibo-color-white;
+    border: 2px dashed $xibo-color-white;
+    border-style: dashed;
+    @include user-select-none();
+
+    &:hover {
+        @include set-transparent-color(background-color, $xibo-color-blue, 0.9);
+    }
+}
+
+.background-image-add.ui-droppable-active .background-image-drop {
+    display: block;
+    z-index: 10;
+}
+
+div#bg_not_found_icon {
+    width: 60%;
+}

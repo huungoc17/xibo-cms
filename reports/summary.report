@@ -1,0 +1,14 @@
+{
+  "name": "summaryReport",
+  "description": "Chart: Summary by Layout, Media or Event",
+  "class": "\\Xibo\\Report\\SummaryReport",
+  "type": "Chart",
+  "output_type": "both",
+  "color":"red",
+  "fa_icon": "fa-bar-chart",
+  "sort_order": 2,
+  "hidden": 0,
+  "category": "Proof of Play",
+  "feature": "proof-of-play",
+  "adminOnly": 0
+}

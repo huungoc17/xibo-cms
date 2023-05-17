@@ -1,0 +1,36 @@
+{#
+/**
+ * Copyright (C) 2023 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#}
+{% extends "non-authed.twig" %}
+
+{% block title %}{{ "Error"|trans }} | {% endblock %}
+
+{% block content %}
+    <h3>{% trans "Error" %}</h3>
+    {% if message != "" %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% else %}
+        <div class="alert alert-danger">{{ "Sorry there has been an unknown error."|trans }}</div>
+    {% endif %}
+    <p>{% trans "Please press the button below to go to your homepage or press back in your browser" %}</p>
+    <a class="btn btn-info" href="{{ homeUrl }}">{% trans "Home" %}</a>
+{% endblock %}

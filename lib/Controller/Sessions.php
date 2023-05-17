@@ -1,0 +1,175 @@
+<?php
+/**
+ * Copyright (C) 2021 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+namespace Xibo\Controller;
+
+use Carbon\Carbon;
+
+use Slim\Http\Response as Response;
+use Slim\Http\ServerRequest as Request;
+use Xibo\Factory\SessionFactory;
+use Xibo\Helper\DateFormatHelper;
+use Xibo\Storage\StorageServiceInterface;
+use Xibo\Support\Exception\AccessDeniedException;
+
+/**
+ * Class Sessions
+ * @package Xibo\Controller
+ */
+class Sessions extends Base
+{
+    /**
+     * @var StorageServiceInterface
+     */
+    private $store;
+
+    /**
+     * @var SessionFactory
+     */
+    private $sessionFactory;
+
+    /**
+     * Set common dependencies.
+     * @param StorageServiceInterface $store
+     * @param SessionFactory $sessionFactory
+     */
+    public function __construct($store, $sessionFactory)
+    {
+        $this->store = $store;
+        $this->sessionFactory = $sessionFactory;
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return \Psr\Http\Message\ResponseInterface|Response
+     * @throws \Xibo\Support\Exception\ControllerNotImplemented
+     * @throws \Xibo\Support\Exception\GeneralException
+     */
+    function displayPage(Request $request, Response $response)
+    {
+        $this->getState()->template = 'sessions-page';
+
+        return $this->render($request, $response);
+    }
+
+    /**
+     * @param Request $request
+     * @param Response $response
+     * @return \Psr\Http\Message\ResponseInterface|Response
+     * @throws \Xibo\Support\Exception\ControllerNotImplemented
+     * @throws \Xibo\Support\Exception\GeneralException
+     */
+    function grid(Request $request, Response $response)
+    {
+        $sanitizedQueryParams = $this->getSanitizer($request->getQueryParams());
+
+        $sessions = $this->sessionFactory->query($this->gridRenderSort($sanitizedQueryParams), $this->gridRenderFilter([
+            'type' => $sanitizedQueryParams->getString('type'),
+            'fromDt' => $sanitizedQueryParams->getString('fromDt')
+        ], $sanitizedQueryParams));
+
+        foreach ($sessions as $row) {
+            /* @var \Xibo\Entity\Session $row */
+
+            // Normalise the date
+            $row->lastAccessed = Carbon::createFromTimeString($row->lastAccessed)->format(DateFormatHelper::getSystemFormat());
+
+            if (!$this->isApi($request) && $this->getUser()->isSuperAdmin()) {
+
+                $row->includeProperty('buttons');
+
+                // Edit
+                $row->buttons[] = array(
+                    'id' => 'sessions_button_logout',
+                    'url' => $this->urlFor($request,'sessions.confirm.logout.form', ['id' => $row->sessionId]),
+                    'text' => __('Logout')
+                );
+            }
+        }
+
+        $this->getState()->template = 'grid';
+        $this->getState()->recordsTotal = $this->sessionFactory->countLast();
+        $this->getState()->setData($sessions);
+
+        return $this->render($request, $response);
+    }
+
+    /**
+     * Confirm Logout Form
+     * @param Request $request
+     * @param Response $response
+     * @param $id
+     * @return \Psr\Http\Message\ResponseInterface|Response
+     * @throws AccessDeniedException
+     * @throws \Xibo\Support\Exception\ControllerNotImplemented
+     * @throws \Xibo\Support\Exception\GeneralException
+     */
+    function confirmLogoutForm(Request $request, Response $response, $id)
+    {
+        if ($this->getUser()->userTypeId != 1) {
+            throw new AccessDeniedException();
+        }
+
+        $this->getState()->template = 'sessions-form-confirm-logout';
+        $this->getState()->setData([
+            'sessionId' => $id,
+            'help' => $this->getHelp()->link('Sessions', 'Logout')
+        ]);
+
+        return $this->render($request, $response);
+    }
+
+    /**
+     * Logout
+     * @param Request $request
+     * @param Response $response
+     * @param $id
+     * @return \Psr\Http\Message\ResponseInterface|Response
+     * @throws AccessDeniedException
+     * @throws \Xibo\Support\Exception\ControllerNotImplemented
+     * @throws \Xibo\Support\Exception\GeneralException
+     * @throws \Xibo\Support\Exception\NotFoundException
+     */
+    function logout(Request $request, Response $response, $id)
+    {
+        if ($this->getUser()->userTypeId != 1) {
+            throw new AccessDeniedException();
+        }
+
+        $session = $this->sessionFactory->getById($id);
+
+        if ($session->userId != 0) {
+            $this->store->update('UPDATE `session` SET IsExpired = 1 WHERE userID = :userId ',
+                ['userId' => $session->userId]);
+        } else {
+            $this->store->update('UPDATE `session` SET IsExpired = 1 WHERE session_id = :session_id ',
+                ['session_id' => $id]);
+        }
+
+        // Return
+        $this->getState()->hydrate([
+            'message' => __('User Logged Out.')
+        ]);
+
+        return $this->render($request, $response);
+    }
+}

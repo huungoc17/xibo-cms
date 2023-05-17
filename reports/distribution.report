@@ -1,0 +1,14 @@
+{
+  "name": "distributionReport",
+  "description": "Chart: Distribution by Layout, Media or Event",
+  "class": "\\Xibo\\Report\\DistributionReport",
+  "type": "Chart",
+  "output_type": "both",
+  "color":"green",
+  "fa_icon": "fa-bar-chart",
+  "sort_order": 3,
+  "hidden": 0,
+  "category": "Proof of Play",
+  "feature": "proof-of-play",
+  "adminOnly": 0
+}

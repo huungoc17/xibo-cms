@@ -1,0 +1,110 @@
+{#
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#}
+
+{% extends "form-base.twig" %}
+{% import "forms.twig" as forms %}
+
+{% block formTitle %}
+    {% trans "Schedule Now" %}
+{% endblock %}
+
+{% block formButtons %}
+    {% trans "Help" %}, XiboHelpRender("{{ help }}")
+    {% trans "Cancel" %}, XiboDialogClose()
+    {% trans "Save" %}, scheduleNowFormSubmit($("#scheduleNowForm"))
+{% endblock %}
+
+{% block callBack %}setupScheduleNowForm{% endblock %}
+
+{% block formHtml %}
+    <div class="row">
+        <div class="col-md-12">
+            <form id="scheduleNowForm" class="XiboForm form-horizontal" method="post" action="{{ url_for("schedule.add") }}">
+                {{ forms.hidden("eventTypeId", eventTypeId) }}
+                {{ forms.hidden("dayPartId", customDayPart.dayPartId) }}
+                {{ forms.hidden("alwaysDayPartId", alwaysDayPart.dayPartId) }}
+                {{ forms.hidden("customDayPartId", customDayPart.dayPartId) }}
+                {{ forms.hidden("fromDt", "") }}
+                {{ forms.hidden("toDt", "") }}
+                {{ forms.hidden("syncTimezone", "1") }}
+
+                {# Campaign / Layout list. We want to build two arrays for us to use. #}
+                {% set attributes = [
+                    { name: "data-search-url", value:  url_for("campaign.search") },
+                    { name: "data-search-is-layout-specific", value: -1 },
+                    { name: "data-trans-layout", value: "Layout"|trans },
+                    { name: "data-trans-layout-help-text", value: "Please select a Layout for this Event to show"|trans },
+                    { name: "data-trans-campaign", value: "Campaign"|trans },
+                    { name: "data-trans-campaign-help-text", value: "Please select a Campaign for this Event to show"|trans },
+                ] %}
+
+                {% set title %}{% trans "Layout" %}{% endset %}
+                {% set helpText %}{% trans "Please select a Layout for this Event to show" %}{% endset %}
+                {{ forms.dropdown("campaignId", "single", title, campaign.campaignId, [campaign], "campaignId", "campaign", helpText, "layout-control", "", "", "", attributes) }}
+
+                {% set title %}{% trans "Always?" %}{% endset %}
+                {% set helpText %}{% trans "Run this event from now and dont stop." %}{% endset %}
+                {{ forms.checkbox("always", title, "", helpText) }}
+
+                {% set title %}{% trans "Hours" %}{% endset %}
+                {% set helpText %}{% trans "Hours this event should be scheduled for" %}{% endset %}
+                {{ forms.number("hours", title, "", helpText, "duration-part") }}
+                
+                {% set title %}{% trans "Minutes" %}{% endset %}
+                {% set helpText %}{% trans "Minutes this event should be scheduled for" %}{% endset %}
+                {{ forms.number("minutes", title, "", helpText, "duration-part") }}
+                
+                {% set title %}{% trans "Seconds" %}{% endset %}
+                {% set helpText %}{% trans "Seconds this event should be scheduled for" %}{% endset %}
+                {{ forms.number("seconds", title, "", helpText, "schedule-now-seconds-field duration-part") }}
+
+                {% set title %}{% trans %}Your event will be scheduled from [fromDt] to [toDt] in the CMS timezone, please check this covers each of your Displays in their respective timezones.{% endtrans %}{% endset %}
+                <div class="alert alert-info scheduleNowMessage d-none" data-template="{{ title }}"></div>
+
+                {% set title %}{% trans "Display" %}{% endset %}
+                {% set helpText %}{% trans "Please select one or more displays / groups for this event to be shown on." %}{% endset %}
+                {% set attributes = [
+                    { name: "data-search-url", value:  url_for("displayGroup.search") },
+                    { name: "data-trans-groups", value:  "Groups"|trans },
+                    { name: "data-trans-display", value:  "Display"|trans }
+                ] %}
+                {{ forms.dropdown("displayGroupIds[]", "dropdownmulti", title, [displayGroupId], displayGroup, "displayGroupId", "displayGroup", helpText, "", "", "", "", attributes) }}
+
+                {% set title %}{% trans "Display Order" %}{% endset %}
+                {% set helpText %}{% trans "Should this event have an order?" %}{% endset %}
+                {{ forms.number("displayOrder", title, displayOrder, helpText) }}
+                
+                {% set title %}{% trans "Priority" %}{% endset %}
+                {% set helpText %}{% trans "Sets the event priority - events with the highest priority play in preference to lower priority events." %}{% endset %}
+                {{ forms.number("isPriority", title, isPriority, helpText) }}
+
+                {% if settings.EVENT_SYNC == 1 %}
+                    {% set title %}{% trans "Synchronise this event?" %}{% endset %}
+                    {% set helpText %}{% trans "When selected, all selected players will attempt to synchronise the output (Supported on Android player only)" %}{% endset %}
+                    {{ forms.checkbox("syncEvent", title, 0, helpText, "sync-schedule-control") }}
+                {% endif %}
+
+            </form>
+        </div>
+    </div>
+{% endblock %}

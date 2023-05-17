@@ -1,0 +1,31 @@
+# htaccess file for CMS instances running in /
+# if you are running using an alias or from a sub-folder, please refer to the file in docker/tmp
+# if you previously set a RewriteBase in here, the file in docker/tmp replaces that approach
+RewriteEngine On
+
+# fix authorization header
+RewriteCond %{HTTP:Authorization} .+
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# requests for api authorize
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} ^/api/authorize/.*$
+RewriteRule ^ api/authorize/index.php [QSA,L]
+
+# requests that start with api go down to api/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} ^/api/.*$
+RewriteRule ^ api/index.php [QSA,L]
+
+# install
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} ^/install/.*$
+RewriteRule ^ install/index.php [QSA,L]
+
+# all others - i.e. web
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !\.(css|js|png|jpg)$
+RewriteCond %{REQUEST_URI} !^/dist/.*$
+RewriteCond %{REQUEST_URI} !^/theme/.*$
+RewriteRule ^ index.php [QSA,L]

@@ -1,0 +1,43 @@
+<div id="{{ id }}" 
+    data-type="widget" 
+    data-widget-id="{{ widgetId }}" 
+    data-widget-type="{{ subType }}" 
+    {{#if previewTemplate}}
+        data-toggle="tooltip"
+        data-container="#playlist-timeline" 
+        data-template='{{ previewTemplate }}'
+        data-placement="right"
+        data-title="{{widgetName}}"
+    {{/if}}
+    class="playlist-widget tooltip-always-on selectable {{#eq isValid 0}}invalid-widget{{/eq}} {{#if selected}}selected{{/if}} {{#if isEditable}}editable{{/if}} {{#if isPermissionsModifiable}}permissionsModifiable{{/if}} {{#if isDeletable}}deletable{{/if}}">
+    
+    <div class="widgetLabel timelineMediaItemColouringDefault timelineMediaItemColouring_{{ subType }} {{ widgetColouring }}">
+        <div class="widgetSubType">
+            <i class="fa module-icon-{{subType}} tooltip-always-on" data-toggle="tooltip" data-container="#playlist-timeline" data-title="{{moduleName}}"></i>
+        </div>
+        <div class="widgetDuration tooltip-always-on" data-toggle="tooltip" data-container="#playlist-timeline" data-title="{{duration}}">
+            {{ duration }}
+        </div>
+    </div>
+
+    <div class="widgetName tooltip-always-on" data-toggle="tooltip" data-container="#playlist-timeline" data-title="{{widgetName}}">
+        {{widgetName}}
+    </div>
+
+    <div class="widgetProperties">
+        {{#if audio}}
+            <i class="fa fa-volume-up editProperty" data-property="Audio"></i>
+        {{/if}}
+
+        {{#each transitions}}
+            <i class="fa fa-sign-{{@key}} editProperty" data-property="Transition" data-property-type="{{@key}}"></i>
+        {{/each}}
+
+        {{#gt expireStatus 0}}
+            <i class="fa {{expireStatusIcon}} editProperty" data-html="true" data-toggle="tooltip" data-container="#playlist-timeline"
+                data-title="{{expireStatusTitle}}" data-property="Expiry"></i>
+        {{/gt}}
+    </div>
+</div>
+
+

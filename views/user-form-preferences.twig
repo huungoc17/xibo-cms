@@ -1,0 +1,87 @@
+{#
+/*
+ * Copyright (C) 2021 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#}
+{% extends "form-base.twig" %}
+{% import "forms.twig" as forms %}
+
+{% block formTitle %}
+    {% trans "Preferences" %}
+{% endblock %}
+
+{% block formButtons %}
+    {% trans "Cancel" %}, XiboDialogClose()
+    {% trans "Save" %}, userPreferencesFormSubmit()
+{% endblock %}
+
+{% block formHtml %}
+    <div class="row">
+        <div class="col-md-12">
+            <form id="userPreferences" class="XiboForm form-horizontal" method="put" action="{{ url_for("user.pref") }}">
+                {% if theme.isSettingVisible("NAVIGATION_MENU_POSITION") and theme.isSettingEditable("NAVIGATION_MENU_POSITION") %}
+                    {% set title %}{% trans "Navigation Menu" %}{% endset %}
+                    {% set helpText %}{% trans "Select where the Navigation Menu should be positioned. Once selected please refresh your browser window to apply changes." %}{% endset %}
+
+                    {% set defaultOption %}{% trans "Use the default configured by your administrator" %}{% endset %}
+                    {% set horizontalOption %}{% trans "Horizontal along the top" %}{% endset %}
+                    {% set verticalOption %}{% trans "Vertically on the left" %}{% endset %}
+                    {% set options = [
+                        { id: "", value: defaultOption },
+                        { id: "horizontal", value: horizontalOption },
+                        { id: "vertical", value: verticalOption }
+                    ] %}
+                    {{ forms.dropdown("navigationMenuPosition", "single", title, currentUser.getOptionValue("navigationMenuPosition", ""), options, "id", "value", helpText) }}
+                {% endif %}
+
+                {% if currentUser.isSuperAdmin() %}
+                    {% set title %}{% trans "Show Content From" %}{% endset %}
+                    {% set helpText %}{% trans "Select Standard or DOOH to see relevant content" %}{% endset %}
+                    {% set options = [
+                        { id: 1, value: "Standard"|trans },
+                        { id: 2, value: "DOOH"|trans },
+                        { id: 3, value: "Both"|trans }
+                    ] %}
+                    {{ forms.dropdown("showContentFrom", "single", title, currentUser.showContentFrom, options, "id", "value", helpText) }}
+                {% endif %}
+            
+                {% set title %}{% trans "Force current Library duration?" %}{% endset %}
+                {% set helpText %}{% trans "Assign all Media items based on their Library duration, and make it sticky so that changes in the library are not pulled into Layouts." %}{% endset %}
+                {{ forms.checkbox("useLibraryDuration", title, currentUser.getOptionValue("useLibraryDuration", 0), helpText) }}
+
+                {% set title %}{% trans "Auto show thumbnail column?" %}{% endset %}
+                {% set helpText %}{% trans "When requesting a screenshot from a display should the Thumbnail column be automatically shown if it's not visible?" %}{% endset %}
+                {{ forms.checkbox("showThumbnailColumn", title, currentUser.getOptionValue("showThumbnailColumn", 1), helpText) }}
+
+                {% set title %}{% trans "Clear all auto submit form choices?" %}{% endset %}
+                {% set helpText %}{% trans "If you have selected to automatically submit any forms, tick here to reset." %}{% endset %}
+                {{ forms.checkbox("autoSubmitClearAll", title, 0, helpText) }}
+
+                {% set title %}{% trans "Always use manual Add User form?" %}{% endset %}
+                {% set helpText %}{% trans "If selected the manual Add User form will always open when you click Add User, otherwise the onboarding form will open." %}{% endset %}
+                {{ forms.checkbox("isAlwaysUseManualAddUserForm", title, currentUser.getOptionValue("isAlwaysUseManualAddUserForm", 0), helpText) }}
+
+                {% set title %}{% trans "Remember Folder tree state globally?" %}{% endset %}
+                {% set helpText %}{% trans "When enabled the Folder tree state will be saved globally, each Page will remember the same state. If disabled, the Folder tree state will be saved per Page." %}{% endset %}
+                {{ forms.checkbox("rememberFolderTreeStateGlobally", title, currentUser.getOptionValue("rememberFolderTreeStateGlobally", 1), helpText) }}
+            </form>
+        </div>
+    </div>
+{% endblock %}

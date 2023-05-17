@@ -1,0 +1,22 @@
+<div id="properties-panel-container" class="properties-{{style}}">
+
+    <div class="form-title form-title-{{style}}">
+        {{header}}
+    </div>
+
+    {{#if isDrawerWidget}}
+        {{>properties-panel-editor-controls-target-region trans=trans}}
+    {{/if}}
+
+    {{>properties-panel-editor-controls-dimensions trans=trans}}
+
+    <div class="form-container">
+        {{{form}}}
+    </div>
+
+    <div class="button-container text-right">
+        {{#each buttons}}
+            <button type="button" id="{{@key}}" data-action="{{action}}" data-sub-action="{{subAction}}" onclick="{{click}}" class="properties-panel-btn btn {{type}}">{{name}}</button>
+        {{/each}}
+    </div>
+</div>

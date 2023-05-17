@@ -1,0 +1,1146 @@
+{#
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#}
+{% extends "authed.twig" %}
+{% import "inline.twig" as inline %}
+
+{% block title %}{{ "Schedule"|trans }} | {% endblock %}
+
+{% block pageContent %}
+    <div class="row">
+        <div class="xibo-calendar-controls-container align-content-start col-sm-6 col-xl-5 pr-0 form-inline">
+            <div class="xibo-calendar-controls">
+                <div class="form-check">
+                    <input class="form-check-input" title="Show All" type="checkbox" id="showAll" name="showAll" data-search-url="{{ url_for("displayGroup.search") }}"
+                        {% if displayGroupsShowAll == -1 %}
+                            checked
+                        {% endif %}
+                    >
+                    <label class="form-check-label" for="showAll">{% trans "Show All" %}</label>
+                </div>
+            </div>
+            <div class="xibo-calendar-controls dropdown ">
+                <select id="DisplayList" class="form-control" name="displayGroupIds[]"
+                        data-placeholder="{% trans "Displays" %}"
+                        data-search-url="{{ url_for("displayGroup.search") }}"
+                        data-trans-groups="{% trans "Groups" %}"
+                        data-trans-display="{% trans "Display" %}"
+                        data-allow-clear="true"
+                        data-width="100%"
+                        data-placeholder="{% trans "Select Displays" %}" multiple>
+                    {% for option in displayGroups %}
+                        {% set itemOptionId = attribute(option, "displayGroupId") %}
+                        {% set itemOptionValue = attribute(option, "displayGroup") %}
+                        <option value="{{ itemOptionId }}" selected >{{ itemOptionValue }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="xibo-calendar-controls dropdown">
+                {# Campaign / Layout list. We want to build two arrays for us to use. #}
+                {% set title %}{% trans "Layout / Campaign" %}{% endset %}
+                {% set helpText %}{% trans "Please select a Layout or Campaign for this Event to show" %}{% endset %}
+
+                <select name="campaignId" id="campaignId" class="d-none form-control"
+                    data-search-url= "{{ url_for("campaign.search") }}"
+                    data-trans-campaigns= "{% trans "Campaigns" %}"
+                    data-trans-layouts= "{% trans "Layouts" %}"
+                    data-allow-clear="true"
+                    data-width="100%"
+                    title="{% trans "Layout / Campaign" %}"
+                    data-placeholder="{% trans "Layout / Campaign" %}"
+                    data-dropdownAutoWidth
+                    >
+                </select>
+            </div>
+        </div>
+        <div class="xibo-calendar-controls-container align-content-start justify-content-end col-sm-6 col-xl-7 pl-0 form-inline text-right">
+            {% if currentUser.featureEnabled("schedule.add") %}
+                <div class="xibo-calendar-controls">
+                    <button class="btn btn-success XiboFormButton" href="{{ url_for("schedule.add.form") }}">
+                        {% trans "Add Event" %}
+                    </button>
+                </div>
+            {% endif %}
+            <div class="btn-group xibo-calendar-controls">
+                <button type="button" class="btn btn-primary" data-calendar-nav="prev"><span class="fa fa-backward"></span> {% trans "Prev" %}</button>
+                <button type="button" class="btn btn-white" data-calendar-nav="today">{% trans "Today" %}</button>
+                <button type="button" class="btn btn-primary" data-calendar-nav="next">{% trans "Next" %} <span class="fa fa-forward"></span></button>
+            </div>
+            <div class="xibo-calendar-controls">
+                <div class="inputgroup date" id="dateInput">
+                    <span class="btn btn-outline-dark date-open-button" role="button">
+                        <i class="fa fa-calendar"></i>
+                    </span>
+                    <input type="text" class="form-control" id="dateInputLink" data-input />
+                </div>
+            </div>
+            <div class="btn-group xibo-calendar-controls">
+                <button type="button" class="btn btn-outline-info" data-calendar-view="year">{% trans "Year" %}</button>
+                <button type="button" class="btn btn-outline-info active" data-calendar-view="month">{% trans "Month" %}</button>
+                <button type="button" class="btn btn-outline-info" data-calendar-view="week">{% trans "Week" %}</button>
+                <button type="button" class="btn btn-outline-info" data-calendar-view="day">{% trans "Day" %}</button>
+                {% if currentUser.featureEnabled("schedule.agenda") %}
+                    <button type="button" class="btn btn-outline-info" data-calendar-view="agenda">{% trans "Agenda" %}</button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="text-center col-xl-12">
+            <h1 class="page-header"></h1>
+            <div class="calendar-loading">
+                <span id="calendar-progress" class="fa fa-spin fa-cog"></span>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12 cal-event-agenda-filter" style="display:none;">
+            <!-- Time Slider -->
+            <div class="cal-event-time-bar">
+                <div class="btn slider-step-btn time-picker-step-btn" data-step="-1">
+                    <span class="fa fa-step-backward"></span>
+                </div>
+                <input id="timePicker" type="text"
+                    data-slider-id='timePickerSlider'
+                    data-slider-min="0"
+                    data-slider-max="1439"
+                    data-slider-step="1"
+                    data-slider-value="0"
+                    data-slider-handle="square"
+                />
+                <div class="btn slider-step-btn time-picker-step-btn" data-step="1">
+                    <span class="fa fa-step-forward"></span>
+                </div>
+            </div>
+
+            <!-- Geo location -->
+            <form class="form-inline cal-event-location">
+                <button id="toggleMap" type="button" class="btn btn-primary pull-right" title="{% trans "Map" %}"><i class="fa fa-map"></i></button>
+                <button id="getLocation" type="button" class="btn btn-white pull-right" title="{% trans "Get browser location!" %}"><i class="fa fa-map-marker"></i></button>
+                <button id="clearLocation" type="button" class="btn btn-white pull-right" title="{% trans "Clear coordinates!" %}"><i class="fa fa-times"></i></button>
+                <div class="form-group pull-right">
+                    <input type="email" class="form-control" id="geoLongitude" placeholder="Longitude">
+                </div>
+                <div class="form-group pull-right">
+                    <input type="text" class="form-control" id="geoLatitude" placeholder="Latitude">
+                </div>
+            </form>
+
+            <!-- Geo location map -->
+            <div class="cal-event-location-map" data-default-lat="{{ defaultLat }}" data-default-long="{{ defaultLong }}">
+                <div id="geoFilterAgendaMap" style="height: 400px; width: 100%" class="d-none"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div id="CalendarContainer" data-event-source="{{ url_for("schedule.calendar.data") }}" data-agenda-link="{{ url_for("schedule.events", {id: ':id'}) }}" data-calendar-type="{{ settings.CALENDAR_TYPE }}" class="col-sm-12">
+            <div id="Calendar"></div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="cal-legend">
+                <ul>
+                    <li class="event-always"><span class="fa fa-retweet"></span> {% trans "Always showing" %}</li>
+                    <li class="event-info"><span class="fa fa-desktop"></span> {% trans "Single Display" %}</li>
+                    <li class="event-success"><span class="fa fa-desktop"></span> {% trans "Multi Display" %}</li>
+                    <li class="event-important"><span class="fa fa-bullseye"></span> {% trans "Priority" %}</li>
+                    <li class="event-special"><span class="fa fa-repeat"></span> {% trans "Recurring" %}</li>
+                    <li class="event-inverse"><span class="fa fa-lock"></span> {% trans "View Only" %}</li>
+                    <li class="event-command"><span class="fa fa-wrench"></span> {% trans "Command" %}</li>
+                    <li class="event-interrupt"><span class="fa fa-hand-paper"></span> {% trans "Interrupt" %}</li>
+                    <li class="event-geo-location"><span class="fa fa-map-marker"></span> {% trans "Geo Location" %}</li>
+                    <li class="event-action"><span class="fa fa-paper-plane "></span> {% trans "Interactive Action" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javaScriptTemplates %}
+    {{ parent() }}
+    
+    {% verbatim %}
+        <script type="text/x-handlebars-template" id="calendar-template-day">
+            <div id="cal-day-box">
+                <div class="row-fluid clearfix cal-row-head">
+                    <div class="span1 col-1 cal-cell"><%= cal.locale.time %></div>
+                    <div class="span11 col-11 cal-cell"><%= cal.locale.events %></div>
+                </div>
+                <% if(all_day.length) {%>
+                <div class="row-fluid clearfix cal-day-hour">
+                    <div class="span1 col-1"><b><%= cal.locale.all_day %></b></div>
+                    <div class="span11 col-11">
+                        <% _.each(all_day, function(event){ %>
+                        <%
+                        var eventTitle = (event.event.isAlways == 1) ? event.title : "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsDateFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsDateFormat) + "] " + event.title;
+                        %>
+                        <div class="day-highlight dh-<%= event['class'] %>">
+                            <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                               data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                               class="event-item">
+                                <%= eventTitle %></a>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% }; %>
+                <% if(before_time.length) {%>
+                <div class="row-fluid clearfix cal-day-hour">
+                    <div class="span1 col-3"><b><%= cal.locale.before_time %></b></div>
+                    <div class="span5 col-5">
+                        <% _.each(before_time, function(event){ %>
+                        <div class="day-highlight dh-<%= event['class'] %>">
+                            <span class="cal-hours pull-right"><%= event.end_hour %></span>
+                            <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                               data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                               class="event-item">
+                                <%= event.title %></a>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% }; %>
+                <div id="cal-day-panel" class="clearfix">
+                    <div id="cal-day-panel-hour">
+                        <% for(i = 0; i < hours; i++){ %>
+                        <div class="cal-day-hour">
+                            <% for(l = 0; l < cal._hour_min(i); l++){ %>
+                            <div class="row-fluid cal-day-hour-part">
+                                <div class="span1 col-1"><b><%= cal._hour(i, l) %></b></div>
+                                <div class="span11 col-11"></div>
+                            </div>
+                            <% }; %>
+                        </div>
+                        <% }; %>
+                    </div>
+
+                    <% _.each(by_hour, function(event){ %>
+                    <div class="pull-left day-event <% if (event.lines < 1) { %>day-event-small<% } %> day-highlight dh-<%= event['class'] %>" style="margin-top: <%= (event.top * 30) %>px; height: <%= (event.lines * 30) %>px"
+                    <% if (event.lines < 2) { %>data-toggle="popover" data-html="true" data-content="<a href='<%= event.url ? event.url : "javascript:void(0)" %>'><%= event.title %></a>" title="<%= event.start_hour %> - <%= event.end_hour %>"<% } %>
+                    >
+                    <span class="cal-hours"><%= event.start_hour %> - <%= event.end_hour %></span>
+                    <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                       data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                       data-event-class="<%= event['class'] %>" class="event-item">
+                        <%= event.title %></a>
+                    </div>
+                    <% }); %>
+                </div>
+            <% if(after_time.length) {%>
+            <div class="row-fluid clearfix cal-day-hour">
+                <div class="span1 col-3"><b><%= cal.locale.after_time %></b></div>
+                <div class="span11 col-9">
+                    <% _.each(after_time, function(event){ %>
+                    <div class="day-highlight dh-<%= event['class'] %>">
+                        <span class="cal-hours"><%= event.start_hour %></span>
+                        <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                           data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                           data-event-class="<%= event['class'] %>" class="event-item">
+                            <%= event.title %></a>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% }; %>
+            </div>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-events-list">
+            <span id="cal-slide-tick" style="display: none"></span>
+            <div id="cal-slide-content" class="cal-event-list">
+                <ul class="unstyled list-unstyled">
+                    <% _.each(events, function(event) { %>
+                    <%
+                    var title = event.title;
+                    var eventIcon = "fa-desktop";
+                    var eventClass = "event-warning";
+                    var eventPriority = "";
+
+                    if (event.event.isAlways != 1) {
+                    if (event.event.eventTypeId == 2) {
+                    title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsTimeFormat) + "] " + event.title;
+                    } else if (event.sameDay) {
+                    title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsTimeFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsTimeFormat) + "] " + event.title;
+                    } else {
+                    title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsDateFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsDateFormat) + "] " + event.title;
+                    }
+                    }
+
+                    if (event.event.displayOrder > 0)
+                    title = title + " (" + event.event.displayOrder + ")";
+
+                    if (event.event.displayGroups.length <= 1) {
+                    eventClass = "event-info";
+                    }
+                    else {
+                    eventClass = "event-success";
+                    }
+
+                    if (event.event.isAlways == 1) {
+                    eventIcon = "fa-retweet";
+                    }
+
+                    if (event.event.recurrenceType != null && event.event.recurrenceType != "") {
+                    eventClass = "event-special";
+                    eventIcon = "fa-repeat";
+                    }
+
+                    if (event.event.isPriority >= 1) {
+                        eventClass = "event-important";
+                        eventIcon = "fa-bullseye";
+                        eventPriority = event.event.isPriority;
+                    }
+
+                    if (event.event.eventTypeId == 2) {
+                        eventIcon = "fa-wrench";
+                    }
+
+                    if (event.event.eventTypeId == 4) {
+                        eventIcon = "fa-hand-paper";
+                    }
+
+                    if (event.event.isGeoAware === 1) {
+                        eventIcon = "fa-map-marker";
+                    }
+
+                    if (event.event.eventTypeId == 6) {
+                        eventIcon = "fa-paper-plane";
+                    }
+
+                    if (!event.editable) {
+                    event.url = null;
+                    eventIcon = "fa-lock";
+                    eventClass = "event-inverse";
+                    }
+                    %>
+                    <li>
+                        <span class="pull-left event <%= event['class'] %>"></span>&nbsp;
+                        <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                           data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                           data-event-class="<%= eventClass %>" class="event-item">
+                            <span class="fa <%= eventIcon %>"><span class="event-priority"><%= eventPriority %></span></span> <%= title %></a>
+                    </li>
+                    <% }) %>
+                </ul>
+            </div>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-month">
+            <div class="cal-row-fluid cal-row-head">
+                <% _.each(days_name, function(name){ %>
+                <div class="cal-cell1"><%= name %></div>
+                <% }) %>
+            </div>
+            <div class="cal-month-box">
+                <% for(i = 0; i < 6; i++) { %>
+                <% if(cal.stop_cycling == true) break; %>
+                <div class="cal-row-fluid cal-before-eventlist">
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day1"><%= cal._day(i, day++) %></div>
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day2"><%= cal._day(i, day++) %></div>
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day3"><%= cal._day(i, day++) %></div>
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day4"><%= cal._day(i, day++) %></div>
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day5"><%= cal._day(i, day++) %></div>
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day6"><%= cal._day(i, day++) %></div>
+                    <div class="cal-cell1 cal-cell" data-cal-row="-day7"><%= cal._day(i, day++) %></div>
+                </div>
+                <% } %>
+            </div>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-month-day">
+            <div class="cal-month-day <%= cls %>">
+                <span class="pull-right" data-cal-date="<%= data_day %>" data-cal-view="day" data-toggle="tooltip" title="<%= tooltip %>"><%= day %></span>
+
+                <% if (events.length > 0) { %>
+                    <span class="cal-month-day-number-events label label-info" data-toggle="tooltip" title="{% endverbatim %}{% trans "Number of events" %}{% verbatim %}"><%= events.length %></span>
+                <% } %>
+
+                <% if (events.length > 0) { %>
+                <div class="events-list" data-cal-start="<%= start %>" data-cal-end="<%= end %>">
+                    <% _.each(events, function(event) { %>
+                    <%
+                    var title = event.title;
+                    var eventIcon = "fa-desktop";
+                    var eventClass = "event-warning";
+                    var eventPriority = "";
+
+                    if (event.event.isAlways != 1) {
+                    if (event.event.eventTypeId == 2) {
+                    title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsTimeFormat) + "] " + event.title;
+                    } else if (event.sameDay) {
+                    title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsTimeFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsTimeFormat) + "] " + event.title;
+                    } else {
+                    title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsDateFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsDateFormat) + "] " + event.title;
+                    }
+                    }
+
+                    if (event.event.displayOrder > 0)
+                    title = title + " (" + event.event.displayOrder + ")";
+
+                    if (event.event.displayGroups.length <= 1) {
+                    eventClass = "event-info";
+                    }
+                    else {
+                    eventClass = "event-success";
+                    }
+
+                    if (event.event.isAlways == 1) {
+                    eventIcon = "fa-retweet";
+                    }
+
+                    if (event.event.recurrenceType != null && event.event.recurrenceType != "") {
+                    eventClass = "event-special";
+                    eventIcon = "fa-repeat";
+                    }
+
+                    if (event.event.isPriority >= 1) {
+                        eventClass = "event-important";
+                        eventIcon = "fa-bullseye";
+                        eventPriority = event.event.isPriority;
+                    }
+
+                    if (event.event.eventTypeId == 2) {
+                        eventIcon = "fa-wrench";
+                    }
+
+                    if (event.event.eventTypeId == 4) {
+                        eventIcon = "fa-hand-paper";
+                    }
+
+                    if (event.event.isGeoAware === 1) {
+                        eventIcon = "fa-map-marker";
+                    }
+
+                    if (event.event.eventTypeId == 6) {
+                        eventIcon = "fa-paper-plane";
+                    }
+
+                    if (!event.editable) {
+                    event.url = null;
+                    eventIcon = "fa-lock";
+                    eventClass = "event-inverse";
+                    }
+                    %>
+                    <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                       data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                       data-event-class="<%= eventClass %>"
+                       class="pull-left event <%= eventClass %>" data-toggle="tooltip"
+                       title="<%= event.title %>"><span class="fa <%= eventIcon %>"><span class="event-priority"><%= eventPriority %></span></span></a>
+                    <% }); %>
+                </div>
+                <% } %>
+            </div>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-week">
+            <div class="cal-week-box">
+                <div class="cal-offset1 cal-column"></div>
+                <div class="cal-offset2 cal-column"></div>
+                <div class="cal-offset3 cal-column"></div>
+                <div class="cal-offset4 cal-column"></div>
+                <div class="cal-offset5 cal-column"></div>
+                <div class="cal-offset6 cal-column"></div>
+                <div class="cal-row-fluid cal-row-head">
+                    <% _.each(days_name, function(name) { %>
+                    <div class="cal-cell1 <%= cal._getDayClass('week', start) %>" data-toggle="tooltip" title="<%= cal._getHolidayName(start) %>"><%= name %><br>
+                        <small><span data-cal-date="<%= start.getFullYear() %>-<%= start.getMonthFormatted() %>-<%= start.getDateFormatted() %>" data-cal-view="day"><%= cal.options.type !== 'Jalali' ? start.getDate() : start.getJalaliDate() %> <%= cal.options.type !== 'Jalali' ? cal.locale['ms' + start.getMonth()] : cal.locale['jms' + (start.getJalaliMonth() - 1)] %></span></small>
+                    </div>
+                    <% start.setDate(start.getDate() + 1); %>
+                    <% }) %>
+                </div>
+                <hr>
+                <%= cal._week() %>
+            </div>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-week-days">
+            <% _.each(events, function(event){ %>
+            <%
+            var title = event.title;
+            var eventIcon = "fa-desktop";
+            var eventClass = "event-warning";
+            var eventPriority = "";
+
+            if (event.event.isAlways != 1) {
+            if (event.event.eventTypeId == 2) {
+            title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsTimeFormat) + "] " + event.title;
+            } else if (event.sameDay) {
+            title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsTimeFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsTimeFormat) + "] " + event.title;
+            } else {
+            title = "[" + moment(event.scheduleEvent.fromDt, systemDateFormat).format(jsDateFormat) + " - " + moment(event.scheduleEvent.toDt, systemDateFormat).format(jsDateFormat) + "] " + event.title;
+            }
+            }
+
+            if (event.event.displayOrder > 0)
+            title = title + " (" + event.event.displayOrder + ")";
+
+            if (event.event.displayGroups.length <= 1) {
+            eventClass = "event-info";
+            }
+            else {
+            eventClass = "event-success";
+            }
+
+            if (event.event.isAlways == 1) {
+            eventIcon = "fa-retweet";
+            }
+
+            if (event.event.recurrenceType != null && event.event.recurrenceType != "") {
+            eventClass = "event-special";
+            eventIcon = "fa-repeat";
+            }
+
+            if (event.event.isPriority >= 1) {
+                eventClass = "event-important";
+                eventIcon = "fa-bullseye";
+                eventPriority = event.event.isPriority;
+            }
+
+            if (event.event.eventTypeId == 4) {
+                eventIcon = "fa-hand-paper";
+            }
+
+            if (event.event.isGeoAware === 1) {
+                eventIcon = "fa-map-marker";
+            }
+
+            if (event.event.eventTypeId == 6) {
+                eventIcon = "fa-paper-plane";
+            }
+
+            if (!event.editable) {
+            event.url = null;
+            eventIcon = "fa-wrench";
+            eventClass = "event-inverse";
+            }
+            %>
+            <div class="cal-row-fluid">
+                <div class="cal-cell<%= event.days%> cal-offset<%= event.start_day %> day-highlight dh-<%= event['class'] %>">
+                    <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                       data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                       data-event-class="<%= eventClass %>"
+                       class="cal-event-week event<%= event.id %>"><span class="fa <%= eventIcon %>"><span class="event-priority"><%= eventPriority %></span></span> <%= title %></a>
+                </div>
+            </div>
+            <% }); %>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-year">
+            <div class="cal-year-box">
+                <div class="row row-fluid cal-before-eventlist">
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month1"><%= cal._month(0) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month2"><%= cal._month(1) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month3"><%= cal._month(2) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month4"><%= cal._month(3) %></div>
+                </div>
+                <div class="row row-fluid cal-before-eventlist">
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month1"><%= cal._month(4) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month2"><%= cal._month(5) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month3"><%= cal._month(6) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month4"><%= cal._month(7) %></div>
+                </div>
+                <div class="row row-fluid cal-before-eventlist">
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month1"><%= cal._month(8) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month2"><%= cal._month(9) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month3"><%= cal._month(10) %></div>
+                    <div class="span3 col-md-3 cal-cell" data-cal-row="-month4"><%= cal._month(11) %></div>
+                </div>
+            </div>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-year-month">
+            <span class="pull-right" data-cal-date="<%= data_day %>" data-cal-view="month"><%= month_name %></span>
+            <% if (events.length > 0) { %>
+            <small class="cal-events-num badge badge-important pull-left"><%= events.length %></small>
+            <div class="hide events-list" data-cal-start="<%= start %>" data-cal-end="<%= end %>">
+                <% _.each(events, function(event) { %>
+                <a href="<%= event.url ? event.url : 'javascript:void(0)' %>" data-event-id="<%= event.id %>"
+                   data-event-start="<%= event.start %>" data-event-end="<%= event.end %>"
+                   data-event-class="<%= event['class'] %>"
+                   class="pull-left event <%= event['class'] %> event<%= event.id %>" data-toggle="tooltip"
+                   title="<%= event.title %>"></a>
+                <% }); %>
+            </div>
+            <% } %>
+        </script>
+        
+        <script type="text/x-handlebars-template" id="calendar-template-agenda">
+            
+            <div class="container-fluid">
+                
+                <!-- Content panel with tabs -->
+                <div class="card with-nav-tabs bg-white agenda-panel">
+                
+                    <!-- Tab Panel -->
+                    <% if (typeof agenda.displayGroupList != 'undefined' && agenda.displayGroupList.length > 1) { %>
+                        <div class="card-heading">
+                                <ul class="nav nav-tabs">
+                                    <% _.each(agenda.displayGroupList, function(displayGroup){ %>
+                                        <% if (displayGroup['id'] == agenda.selectedDisplayGroup) { %>
+                                            <li class="nav-item active">
+                                        <% } else { %>
+                                            <li class="nav-item">
+                                        <% }; %>
+                                        
+                                            <%
+                                                // If it is a simple display show an 
+                                                var displayGroupIcon = "";
+                                                if (displayGroup['isDisplaySpecific'] == 0)
+                                                    displayGroupIcon = "<span class='fa fa-television'></span> ";
+                                            %>
+                                        
+                                            <a class="nav-link" data-toggle="tab" data-id="<%= displayGroup['id'] %>" href="#tab_<%= displayGroup['id'] %>">
+                                                <%= (displayGroupIcon + displayGroup['name']) %>
+                                            </a>
+                                        </li>
+                                    <% }); %>
+                                </ul> 
+                        </div>
+                    <% } %>
+                
+                    <!-- Tab Content -->
+                    <div class="card-body p-1">
+                    
+                    <% if (agenda.errorMessage != '') { %>
+                       {% endverbatim %}
+                       <!-- Request failed - Show Error Message -->
+                       <div class="text-danger text-center">
+                           <% if (agenda.errorMessage == 'display_not_selected') { %>
+                               <p>{% trans "Display not selected!" %}</p>
+                           <% } else if (agenda.errorMessage == 'all_displays_selected') { %>
+                               <p>{% trans "Show All option does not work for this filter, one or more specific Display/Display Group need to be selected!" %}</p>
+                           <% } else if (agenda.errorMessage == 'no_events') { %>
+                               <p>{% trans "No events for the chosen Display/Display Group on the selected date!" %}</p>    
+                           <% } else  if (agenda.errorMessage == 'request_failed') { %>
+                               <p>{% trans "Data request failed!" %}</p>
+                           <% } %>
+                       </div>
+                       {% verbatim %}
+                   <% } else if(!jQuery.isEmptyObject(agenda.results)) { %>
+                        <!-- Request successful - Show Data -->
+                            
+                        <!-- Breadcrumb trail -->
+                        <div class="cal-event-breadcrumb-trail col-12">
+                            <div id="content"></div>
+                        </div>     
+                        
+                        <!-- Agenda Data Content -->
+                        <div class="tab-content">
+                            <% _.each(agenda.displayGroupList, function(displayGroup){ %>
+                                <% if (typeof agenda.results[(displayGroup['id'])] != 'undefined') { %>
+                                    <% 
+                                        var resultItem = agenda.results[displayGroup['id']]; 
+                                        var isActive = (displayGroup['id'] == agenda.selectedDisplayGroup) ? 'active' : '';
+                                    %>
+                                    <div id="tab_<%= displayGroup['id'] %>" class="tab-pane <%= isActive %> container-fluid">
+                                        <div class="row">
+                                            <% if(typeof resultItem.events != 'undefined') { %>
+                                                <div class="col-lg-9 agenda-col">
+                                                    <%= cal._layouts(resultItem.events, resultItem.layouts, 1) %>
+                                                    <%= cal._layouts(resultItem.events, resultItem.layouts, 3) %>
+                                                    <%= cal._layouts(resultItem.events, resultItem.layouts, 4) %>
+                                                    <%= cal._layouts(resultItem.events, resultItem.layouts, 5) %>
+                                                </div>
+                                                <div class="col-lg-3 agenda-col">
+                                                    <div class="row">
+                                                        <div class="col-6 col-lg-12 agenda-col">
+                                                            <%= cal._displaygroups(resultItem.events, resultItem.displayGroups) %>
+                                                        </div> 
+                                                        <div class="col-6 col-lg-12 agenda-col">
+                                                            <%= cal._campaigns(resultItem.events, resultItem.campaigns) %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            <% }); %>
+                        </div>
+                    <% } %>   
+                    </div>
+                </div>
+            </div>
+        </script>
+        
+        <script type="text/x-handlebars-template" id="calendar-template-agenda-layouts">
+            <table class="table agenda-table agenda-table-layouts" data-type="layouts" style="width: 100%;">
+                <thead>
+                    <tr class="table-title">
+                     <% if (layouts.type == 4) { %>
+                        <th colspan="11" class="pr-2">
+                     <% } else { %>
+                        <th colspan="10" class="pr-2">
+                     <% } %>
+                            <% if (layouts.type == 1) { %>
+                                {% endverbatim %}{% trans "Layouts" %}{% verbatim %}</span>
+                            <% } else if (layouts.type == 3) { %>
+                                {% endverbatim %}{% trans "Overlay Layouts" %}{% verbatim %}
+                            <% } else if (layouts.type == 4) { %>
+                                {% endverbatim %}{% trans "Interrupt Layouts" %}{% verbatim %}
+                            <% } else if (layouts.type == 5) { %>
+                                {% endverbatim %}{% trans "Campaign Layouts" %}{% verbatim %}
+                            <% } %>
+                            
+                            <span class="pull-right badge badge-light" title="{% endverbatim %}{% trans "Number of Layouts" %}{% verbatim %}" data-toggle="tooltip" data-placement="top">
+                                <%= layouts.length %>
+                            </span>
+                        </th>
+                    </tr>
+                    {% endverbatim %}
+                    <tr>
+                        <th></th>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Layout Name" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "From Date" %}</th>
+                        <th>{% trans "To Date" %}</th>
+                        <th>{% trans "Layout Duration" %}</th>
+                        {%  verbatim %}<% if (layouts.type == 4) { %>{% endverbatim %}
+                        <th>{% trans "Share of Voice" %}</th>
+                        {% verbatim %}<% } %>{% endverbatim %}
+                        <th>{% trans "Display Order" %}</th>
+                        <th>{% trans "Priority" %}</th>
+                        <th>{% trans "Visible" %}</th>
+                    </tr>
+                    {% verbatim %}
+                </thead>
+                <tbody>
+                    <% _.each(layouts, function(layout){ %>
+                        <tr 
+                            class="<%= layout.itemClass %>"
+                            data-elem-id="<%= layout.layoutId %>" 
+                            data-event-id="<%= layout.eventId %>" 
+                            data-toggle="tooltip"
+                            <% if (layout.itemClass == 'low-priority') { %>
+                                title="{% endverbatim %}{% trans "This layout will not be shown as there are higher priority layouts scheduled at this time" %}{% verbatim %}"
+                            <% } %> 
+                        >
+                            <td><span class="fa <%= layout.itemIcon %>"></span></td>
+                            <td><%= layout.layoutId %></td>
+                            <td><%= layout.layoutName %></td>
+                            <%
+                                var icon = "";
+                                if (layout.layoutStatus == 1)
+                                    icon = "fa-check";
+                                else if (layout.layoutStatus == 0)
+                                    icon = "fa-times";
+                                else if (layout.layoutStatus == 3)
+                                    icon = "fa-cogs";
+                                else
+                                    icon = "fa-exclamation";
+                            %>
+                            <td><span class="fa <%= icon %>"></span></td>
+                            <% if (layout.isAlways == 1) { %>
+                                <td>{% endverbatim %}{% trans "Always" %}{% verbatim %}</td>
+                                <td><span class="fa fa-retweet"></span></td>
+                            <% } else { %> 
+                                <td><%= layout.eventFromDt %></td>
+                                <td><%= layout.eventToDt %></td>
+                            <% } %> 
+                            
+                            <td><%= layout.layoutDuration %></td>
+                            <% if (layouts.type == 4) { %>
+                            <td><%= layout.shareOfVoice %></td>
+                            <% } %>
+                            <td><%= layout.layoutDisplayOrder %></td>
+                            <td><%= layout.eventPriority %></td>
+                            <%
+                                var icon = "";
+                                if (layout.itemClass == 'low-priority')
+                                    icon = "fa-times";
+                                else
+                                    icon = "fa-check";
+                            %>
+                            <td><span class="fa <%= icon %>"></span></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </script>
+
+        <script type="text/x-handlebars-template" id="calendar-template-agenda-displaygroups">
+            <table id="displaygroups" class="table agenda-table" data-type="displaygroups"  width="100%">
+                {% endverbatim %}
+                <thead>
+                    <tr class="table-title">
+                        <th colspan="3">{% trans "Display Groups" %}</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Name" %}</th>
+                    </tr>
+                </thead>
+                {% verbatim %}
+                <tbody>
+                    <% _.each(displaygroups, function(displaygroup){ %>
+                        <tr data-elem-id="<%= displaygroup.displayGroupId %>">
+                            <%
+                                var icon = "";
+                                if (displaygroup.isDisplaySpecific == 1)
+                                    icon = "fa-television";
+                            %>
+                            <td><span class="fa <%= icon %>"></span></td>
+                            <td><%= displaygroup.displayGroupId %></td>
+                            <td><%= displaygroup.displayGroup %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </script>
+        
+        <script type="text/x-handlebars-template" id="calendar-template-agenda-campaigns">
+            <table id="campaigns" class="table agenda-table" data-type="campaigns"  width="100%">
+                {% endverbatim %}
+                <thead>
+                    <tr class="table-title">
+                        <th colspan="4">{% trans "Campaigns" %}</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Name" %}</th>
+                        <th>{% trans "Cycle Playback?" %}</th>
+                    </tr>
+                </thead>
+                {% verbatim %}
+                <tbody>
+                    <% _.each(campaigns, function(campaign){ %>
+                        <tr data-elem-id="<%= campaign.campaignId %>">
+                            <td></td>
+                            <td><%= campaign.campaignId %></td>
+                            <td><%= campaign.campaign %></td>
+                            <%
+                                var icon = "";
+                                if (campaign.cyclePlaybackEnabled == 0)
+                                    icon = "fa-times";
+                                else
+                                    icon = "fa-check";
+                            %>
+                            <td><span class="fa <%= icon %>"></span></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </script>
+        
+        <script type="text/x-handlebars-template" id="calendar-template-breadcrumb-trail">
+            <!-- Layout -->
+            <span>
+                <a href="<%= layout.link %>"><%= layout.name %></a>
+            </span>
+            
+            <span>&nbsp;<i class="fa fa-arrow-right" aria-hidden="true"></i>&nbsp;</span>
+            
+            <!-- Campaign -->
+            <% if (typeof campaign != 'undefined') { %>
+                <span>
+                    <% if (campaign.link != '') { %>
+                      <a href="<%= campaign.link %>"><%= campaign.name %></a>
+                    <% } else { %>   
+                      <%= campaign.name %>
+                    <% } %> 
+                </span>
+                <span>&nbsp;<i class="fa fa-arrow-right" aria-hidden="true"></i>&nbsp;</span>
+            <% } %> 
+            
+            <!-- Schedule -->
+            <span>
+                <a href="<%= schedule.link %>" class="XiboFormButton" data-event-start="<%= schedule.fromDt %>" data-event-end="<%= schedule.toDt %>">
+                    {% endverbatim %}
+                        {% trans "Schedule" %}
+                    {% verbatim %}
+                </a>
+            </span>
+            
+            <!-- Display Groups -->
+            <% _.each(displayGroups, function(displayGroup){ %>
+                <span>&nbsp;<i class="fa fa-arrow-right" aria-hidden="true"></i>&nbsp;</span>
+                <span>
+                  <% if (displayGroup.link != '') { %>
+                    <a href="<%= displayGroup.link %>"><%= displayGroup.name %></a>
+                  <% } else { %>   
+                    <%= displayGroup.name %>
+                  <% } %> 
+                </span>
+            <% }); %>
+            
+        </script>
+
+
+        <script type="text/x-handlebars-template" id="reminderEventTemplate">
+            <div class="form-group row">
+                <input class="form-control" name="reminder_scheduleReminderId[]" type="hidden" value="{{ scheduleReminderId }}" />
+
+                <div class="col-sm-2">
+                    <label for="reminder_value[]">
+                        <input class="form-control" name="reminder_value[]" type="number" value="{{ value }}" />
+                    </label>
+                </div>
+                <div class="col-sm-2">
+                    <label for="reminder_type[]">
+                        <select class="form-control" name="reminder_type[]">
+                            <option value="1" {{#eq type 1}}selected{{/eq}}>{% endverbatim %}{% trans "Minute" %}{% verbatim %}</option>
+                            <option value="2" {{#eq type 2}}selected{{/eq}}>{% endverbatim %}{% trans "Hour" %}{% verbatim %}</option>
+                            <option value="3" {{#eq type 3}}selected{{/eq}}>{% endverbatim %}{% trans "Day" %}{% verbatim %}</option>
+                            <option value="4" {{#eq type 4}}selected{{/eq}}>{% endverbatim %}{% trans "Week" %}{% verbatim %}</option>
+                            <option value="5" {{#eq type 5}}selected{{/eq}}>{% endverbatim %}{% trans "Month" %}{% verbatim %}</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="col-sm-3">
+                    <label for="reminder_option[]">
+                        <select class="form-control" name="reminder_option[]">
+                            <option value="1" {{#eq option 1}}selected{{/eq}}>{% endverbatim %}{% trans "Before schedule starts" %}{% verbatim %}</option>
+                            <option value="2" {{#eq option 2}}selected{{/eq}}>{% endverbatim %}{% trans "After schedule starts" %}{% verbatim %}</option>
+                            <option value="3" {{#eq option 3}}selected{{/eq}}>{% endverbatim %}{% trans "Before schedule ends" %}{% verbatim %}</option>
+                            <option value="4" {{#eq option 4}}selected{{/eq}}>{% endverbatim %}{% trans "After schedule ends" %}{% verbatim %}</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="col-sm-3">
+                    <label for="reminder_isEmail[]">
+                        <input type="checkbox" name="reminder_isEmail[]" {{#eq isEmail 1}}checked{{/eq}}/>
+                        {% endverbatim %}{% trans "Notify by email?" %}{% verbatim %}
+                        <input type="hidden" name="reminder_isEmailHidden[]" />
+                    </label>
+                </div>
+                <div class="col-sm-2">
+                    <button class="btn btn-white"><i class="fa {{ buttonGlyph }}"></i></button>
+                </div>
+            </div>
+        </script>
+
+        {% endverbatim %}
+{% endblock %}
+
+{% block javaScript %}
+    <script type="text/javascript">
+		// We are using this variable in xibo-calendar.js
+        var scheduleRecurrenceDeleteUrl = "{{ url_for("schedule.recurrence.delete.form", {id:':id'}) }}";
+
+        var layoutPreviewUrl = "{{ url_for("layout.preview", {id: ':id'}) }}";
+
+        // Equals helper for the templates below
+        Handlebars.registerHelper('eq', function(v1, v2, opts) {
+            if (v1 === v2) {
+                return opts.fn(this);
+            } else {
+                return opts.inverse(this);
+            }
+        });
+
+        // Init campaign select2
+        $(function() {
+            // Select lists
+            var dialog = 'body';
+
+            var $campaignSelect = $('.xibo-calendar-controls #campaignId');
+            $campaignSelect.select2({
+                dropdownParent: $(dialog),
+                ajax: {
+                    url: $campaignSelect.data("searchUrl"),
+                    dataType: "json",
+                    placeholder: 'This is my placeholder',
+                    allowClear: true,
+                    data: function(params) {
+
+                        var query = {
+                            isLayoutSpecific: -1,
+                            retired: 0,
+                            totalDuration: 0,
+                            name: params.term,
+                            start: 0,
+                            length: 10,
+                            columns: [
+                                {
+                                    "data": "isLayoutSpecific"
+                                },
+                                {
+                                    "data": "campaign"
+                                }
+                            ],
+                            order: [
+                                {
+                                    "column": 0,
+                                    "dir": "asc"
+                                },
+                                {
+                                    "column": 1,
+                                    "dir": "asc"
+                                }
+                            ]
+                        };
+
+                        // Set the start parameter based on the page number
+                        if (params.page != null) {
+                            query.start = (params.page - 1) * 10;
+                        }
+
+                        return query;
+                    },
+                    processResults: function(data, params) {
+
+                        var results = [];
+                        var campaigns = [];
+                        var layouts = [];
+
+                        $.each(data.data, function(index, element) {
+                            if (element.isLayoutSpecific === 1) {
+                                layouts.push({
+                                    "id": element.campaignId,
+                                    "text": element.campaign
+                                });
+                            } else {
+                                campaigns.push({
+                                    "id": element.campaignId,
+                                    "text": element.campaign
+                                });
+                            }
+                        });
+
+                        if (campaigns.length > 0) {
+                            results.push({
+                                "text": $campaignSelect.data('transCampaigns'),
+                                "children": campaigns
+                            })
+                        }
+
+                        if (layouts.length > 0) {
+                            results.push({
+                                "text": $campaignSelect.data('transLayouts'),
+                                "children": layouts
+                            })
+                        }
+
+                        var page = params.page || 1;
+                        page = (page > 1) ? page - 1 : page;
+
+                        return {
+                            results: results,
+                            pagination: {
+                                more: (page * 10 < data.recordsTotal)
+                            }
+                        }
+                    }
+                }
+            })
+            .on('change', function(e) {
+                // Refresh the calendar view
+                setTimeout(calendar.view(), 1000);
+            });
+
+            var $displaySelect = $('#DisplayList', dialog);
+            $displaySelect.select2({
+                dropdownParent: $(dialog),
+                dropdownAutoWidth: true,
+                ajax: {
+                    url: $displaySelect.data("searchUrl"),
+                    dataType: "json",
+                    data: function(params) {
+                        var query = {
+                            isDisplaySpecific: -1,
+                            forSchedule: 1,
+                            displayGroup: params.term,
+                            start: 0,
+                            length: 10,
+                            columns: [
+                                {
+                                    "data": "isDisplaySpecific"
+                                },
+                                {
+                                    "data": "displayGroup"
+                                }
+                            ],
+                            order: [
+                                {
+                                    "column": 0,
+                                    "dir": "asc"
+                                },
+                                {
+                                    "column": 1,
+                                    "dir": "asc"
+                                }
+                            ]
+                        };
+                        // Set the start parameter based on the page number
+                        if (params.page != null) {
+                            query.start = (params.page - 1) * 10;
+                        }
+                        return query;
+                    },
+                    processResults: function(data, params) {
+                        var groups = [];
+                        var displays = [];
+                        $.each(data.data, function(index, element) {
+                            if (element.isDisplaySpecific === 1) {
+                                displays.push({
+                                    "id": element.displayGroupId,
+                                    "text": element.displayGroup
+                                });
+                            } else {
+                                groups.push({
+                                    "id": element.displayGroupId,
+                                    "text": element.displayGroup
+                                });
+                            }
+                        });
+                        var page = params.page || 1;
+                        page = (page > 1) ? page - 1 : page;
+                        return {
+                            results: [
+                                {
+                                    "text": $displaySelect.data('transGroups'),
+                                    "children": groups
+                                },{
+                                    "text": $displaySelect.data('transDisplay'),
+                                    "children": displays
+                                }
+                            ],
+                            pagination: {
+                                more: (page * 10 < data.recordsTotal)
+                            }
+                        }
+                    }
+                }
+            }).on('select2:unselecting', function() {
+                // Prevent the ajax request when we deselect an option ( change will still be called )
+                var opts = $(this).data('select2').options;
+                opts.set('disabled', true);
+
+                setTimeout(function() {
+                    opts.set('disabled', false);
+                }, 100);
+            })
+            .on('change', function(e) {
+                // Refresh the calendar view
+                setTimeout(calendar.view(), 1000);
+            });
+
+            // Set up our show all selector control
+            $('#showAll', dialog).on('change', function() {
+                setTimeout(calendar.view(), 1000);
+            });
+        });
+    </script>
+{% endblock %}

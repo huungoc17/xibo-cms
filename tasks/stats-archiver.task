@@ -1,0 +1,14 @@
+{
+  "name": "Stats Archiver",
+  "class": "\\Xibo\\XTR\\StatsArchiveTask",
+  "options": {
+    "periodSizeInDays": 7,
+    "maxPeriods": 4,
+    "archiveOwner": "",
+    "archiveStats": "Off",
+    "periodsToKeep": 1,
+    "statsDeleteMaxAttempts": 10,
+    "statsDeleteSleep": 3,
+    "limit": 10000
+  }
+}

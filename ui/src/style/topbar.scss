@@ -1,0 +1,118 @@
+@import "variables";
+
+#layout-editor-topbar nav {
+    border: none;
+    min-height: 40px;
+    z-index: 2;
+    margin: 0;
+    background: $xibo-color-white-pure;
+    color: $xibo-color-primary;
+    right: 0;
+    left: 0;
+    border-radius: 0;
+}
+
+@media (max-width: 768px) {    
+    #layout-editor-topbar nav {
+        .layout-info-duration, .layout-info-dimensions {
+            display: none;
+        }
+    }
+}
+
+#layout-editor-topbar .container-toolbar {
+    padding: 0 16px;
+
+    .navbar-text.layout-info {
+        color: $xibo-color-primary;
+        line-height: 24px;
+        display: inline-block;
+
+        & > span {
+            margin-right: 10px;
+            line-height: 24px;
+        }
+
+        .layout-info-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-right: 3px;
+        }
+
+        .layout-info-icon {
+            margin-right: 2px;
+        }   
+
+        .layout-info-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+            float: left;
+        }
+
+        .layout-info-actions {
+            cursor: pointer;
+        }
+
+        #layout-info-status {
+            float: left;
+            padding: 0 5px;
+            min-width: 24px;
+
+            &.clickable {
+                cursor: pointer;
+            }
+
+            i {
+                font-size: 1rem;
+            }
+        }
+
+        .popover {
+            color: $xibo-color-black;
+            min-width: 250px;
+            
+            .popover-title {
+                padding: 4px;
+                font-weight: bold;
+                text-align: center;
+                border: none;
+            }
+
+            .popover-content {
+                padding: 3px 6px;  
+            }
+
+            .popover-content .status-message {
+                padding: 6px;
+                margin: 0px -1px 3px -1px;
+                border-radius: 6px;
+                background: $xibo-color-red;
+                color: $xibo-color-white;
+            }
+
+            .popover-content .status-title {
+                padding: 4px; 
+                font-weight: bold;
+            }
+        }
+    
+    }
+
+    .layout-action-menu {
+        margin: 0;
+        padding: 0;
+
+        #layoutJumpListContainer {
+            min-width: 120px;
+            margin: 5px 6px;
+
+            .select2-selection {
+                max-height: 30px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+            }
+        }
+    }
+}

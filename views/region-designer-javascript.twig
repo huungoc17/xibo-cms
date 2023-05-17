@@ -1,0 +1,114 @@
+{#
+/**
+ * Copyright (C) 2020 Xibo Signage Ltd
+ *
+ * Xibo - Digital Signage - http://www.xibo.org.uk
+ *
+ * This file is part of Xibo.
+ *
+ * Xibo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * Xibo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Xibo.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#}
+<script type="text/javascript">
+
+    // Runs after form opens
+    function regionFormEditOpen() {
+        
+        // Transition type affects the transition-group visibility
+        formHelpers.setupObjectValueInputFields($(this).find('form'), '#transitionType', ['.transition-group'], null, true);
+
+        // Handle set region as fullscreen button
+        // Get layout object
+        var layout = lD.layout;
+        var form = $(this).find('form');
+        var buttonText = form.find('#setFullScreenButton').html();
+
+        // Replace button text tags
+        if(buttonText) {
+            form.find('#setFullScreenButton').html(buttonText.replace('[width]', layout.width).replace('[height]', layout.height));
+        }
+
+        // Handle click action
+        form.find('#setFullScreenButton').click(function() {
+            // Set position values to 0
+            form.find('#top').val(0);
+            form.find('#left').val(0);
+
+            // Set dimensions values to be the same as the layout's
+            form.find('#width').val(layout.width);
+            form.find('#height').val(layout.height);
+
+            formChangesRegion({
+                'width': layout.width,
+                'height': layout.height,
+                'top': 0,
+                'left': 0 
+            });
+        });
+        
+        form.find('#top, #left, #width, #height').on('change', function(){
+            formChangesRegion();
+        });
+
+        form.find('#zIndex').on('change', function(){
+            formChangesRegionZIndex();
+        });
+
+        regionChangesForm();
+    }
+
+    function formChangesRegion() {
+        var app = lD;
+        var layout = app.layout;
+        var regionId = app.selectedObject.id;
+        var form = $(app.propertiesPanel.DOMObject).find('form');
+
+        layout.regions[regionId].transform({
+            'width': form.find('#width').val(),
+            'height': form.find('#height').val(),
+            'top': form.find('#top').val(),
+            'left': form.find('#left').val()
+        }, false);
+
+        app.renderContainer(app.navigator);
+    }
+
+    function formChangesRegionZIndex() {
+        var app = lD;
+        var form = $(app.propertiesPanel.DOMObject).find('form');
+        var newZIndex = parseInt(form.find('#zIndex').val());
+
+        app.navigator.DOMObject.find('#' + app.selectedObject.id).css('zIndex', newZIndex);
+        app.selectedObject.zIndex = newZIndex;
+    }
+
+    function regionChangesForm() {
+        var app = lD;
+        var form = $(app.propertiesPanel.DOMObject).find('form')
+        
+        // If form not loaded, prevent changes
+        if(form.length == 0 || app.layout.regions[app.selectedObject.id] == undefined) {
+            return;
+        }
+        
+        var regionDimensions = app.layout.regions[app.selectedObject.id].dimensions;
+
+        form.find('#top').val(regionDimensions.top);
+        form.find('#left').val(regionDimensions.left);
+
+        // Set dimensions values to be the same as the layout's
+        form.find('#width').val(regionDimensions.width);
+        form.find('#height').val(regionDimensions.height);
+    }
+</script>
